@@ -347,22 +347,22 @@
   --text-secondary: #6b7280;
 }
 
-.client-dashboard.theme-dark {
+/* .client-dashboard.theme-dark {
   --header-bg: #111827;
   --card-bg: #1f2937;
   --input-bg: #374151;
   --border-color: #374151;
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
-}
+} */
 
 .client-dashboard.theme-light .main {
   background: #f9fafb;
 }
 
-.client-dashboard.theme-dark .main {
+/* .client-dashboard.theme-dark .main {
   background: #111827;
-}
+} */
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -535,14 +535,14 @@
 }
 
 /* Night mode: black background, white text and icons */
-.theme-dark .side {
+/* .theme-dark .side {
   background: #000000;
   color: white;
 }
 
 .theme-dark .side-header h2 {
   color: white;
-}
+} */
 
 /* Candy green: change "Two Seas | Client Portal" color to white */
 .theme-candy-green .side-header h2 {
@@ -725,11 +725,58 @@
   backdrop-filter: blur(12px);
 }
 
-.theme-candy-green .dashboard-header,
-.theme-candy-lightgreen .dashboard-header,
-.theme-candy-blue .dashboard-header,
-.theme-candy-blend .dashboard-header {
-  background: rgba(0, 0, 0, 0.15);
+/* Default dark-style button */
+.admin-menu {
+  background-color: transparent;
+  color: #fff;
+}
+
+/* Hover (works for dark themes) */
+.admin-menu:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Active state */
+.admin-menu.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* Light green + blend themes fix */
+.theme-candy-lightgreen .admin-menu,
+.theme-candy-blend .admin-menu {
+  color: #003300;
+  /* darker text for light bg */
+}
+
+/* Hover for light themes */
+.theme-candy-lightgreen .admin-menu:hover,
+.theme-candy-blend .admin-menu:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  /* subtle dark tint */
+  color: #003300;
+  /* keep readable text */
+}
+
+/* Active for light themes */
+.theme-candy-lightgreen .admin-menu.active,
+.theme-candy-blend .admin-menu.active {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #003300;
+}
+
+/* Dark text for light candy themes */
+.theme-candy-lightgreen .admin-header h1,
+.theme-candy-blend .admin-header h1 {
+  color: #003300;
+  /* dark green tone for readability */
+}
+
+/* White text for darker candy themes */
+.theme-candy-green .admin-header h1,
+.theme-candy-blue .admin-header h1 {
+  color: #fff;
 }
 
 .theme-controls {
@@ -867,11 +914,11 @@
 }
 
 /* Theme-specific dropdown styles */
-.theme-dark .theme-dropdown-menu {
+/* .theme-dark .theme-dropdown-menu {
   background: rgba(0, 0, 0, 0.95);
   border-color: rgba(255, 255, 255, 0.1);
-}
-
+} */
+/* 
 .theme-dark .theme-dropdown-item {
   color: #fff;
 }
@@ -890,11 +937,15 @@
 
 .theme-dark .theme-dropdown-item.reset {
   color: #ccc;
-}
+} */
 
 /* Adjust theme controls spacing */
 .theme-controls {
   margin-top: 16px;
+}
+
+.close-sidebar-btn {
+  display: none;
 }
 
 /* Ensure dropdown stays within viewport on mobile */
@@ -925,7 +976,7 @@
   }
 }
 
-.theme-dark .theme-dropdown-menu::-webkit-scrollbar-track {
+/* .theme-dark .theme-dropdown-menu::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -935,7 +986,7 @@
 
 .theme-dark .theme-dropdown-menu::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
-}
+} */
 
 /* Adjust theme controls spacing */
 .theme-controls {
@@ -955,13 +1006,101 @@
 
 .wishlist-grid {
   display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 28px;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 /* Small screens (mobile) */
 @media (max-width: 768px) {
   .wishlist-grid {
-    grid-template-columns: 1fr; /* 1 card per row */
+    grid-template-columns: 1fr;
+    /* 1 card per row */
+  }
+}
+
+/* Hide hamburger on desktop */
+.mobile-header {
+  display: none;
+}
+
+/* Sidebar overlay (dark background when open) */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+  backdrop-filter: blur(3px);
+}
+
+@media (max-width: 768px) {
+  .sideNav {
+    margin-top: 140px;
+  }
+
+  .sideNav li button {
+    text-align: center;
+  }
+
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2a2d7c;
+    color: white;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .mobile-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* Sidebar hidden by default */
+  .side {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    max-width: 260px;
+    width: 80%;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 6000;
+  }
+
+  /* Sidebar open state */
+  .side.open {
+    transform: translateX(0);
+  }
+
+  /* ✅ Show close button only on mobile */
+  .close-sidebar-btn {
+    display: block;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 1000;
+  }
+
+  .main {
+    padding: 16px;
+  }
+
+  .theme-controls {
+    display: none;
   }
 }

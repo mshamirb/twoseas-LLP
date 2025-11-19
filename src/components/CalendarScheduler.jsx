@@ -290,7 +290,7 @@ const CalendarScheduler = ({
   onScheduleSubmit,
   unavailableDates = [],
   title = "Schedule a Meeting",
-  submitButtonText = "Schedule Interview",
+  submitButtonText = "Book Demo",
   successMessage = "We'll contact you shortly to confirm your appointment.",
   workingHours = { start: 9, end: 21 },
   prefillData = {},
@@ -336,7 +336,7 @@ const CalendarScheduler = ({
   const [showAlternateScheduler, setShowAlternateScheduler] = useState(false);
   const [showAlternateModal, setShowAlternateModal] = useState(false);
 
-    // Add auto-submit effect for client dashboard
+  // Add auto-submit effect for client dashboard
   useEffect(() => {
     if (fromClientDashboard && selectedDate && selectedTime && !isSuccess && !isSubmitting) {
       handleAutoSubmit();
@@ -346,14 +346,14 @@ const CalendarScheduler = ({
   // Add auto-submit function
   const handleAutoSubmit = async () => {
     if (!selectedDate || !selectedTime) return;
-    
+
     setIsSubmitting(true);
     setError('');
 
     try {
       // Get client data from localStorage
       const storedUser = JSON.parse(localStorage.getItem("clientUser"));
-      
+
       // Create interview data object for client dashboard
       const interviewData = {
         clientId: storedUser?.clientId || "882Fgk08q4e8HBYonUeI",
@@ -383,7 +383,7 @@ const CalendarScheduler = ({
       }
 
       setIsSuccess(true);
-      
+
     } catch (error) {
       console.error('Error scheduling interview:', error);
       setError('Failed to schedule interview. Please try again.');
@@ -704,21 +704,21 @@ const CalendarScheduler = ({
 
   const handleSubmit = useCallback(
     async (e) => {
-      e.preventDefault()
+      e.preventDefault();
 
       if (!selectedDate || !selectedTime) {
-        setError("Please fill in all required fields")
-        return
+        setError("Please fill in all required fields");
+        return;
       }
 
-      setIsSubmitting(true)
-      setError("")
+      setIsSubmitting(true);
+      setError("");
 
       try {
-        // Create interview data object
+        // 1️⃣ Build interview data for Firestore
         const interviewData = {
-          clientId: "882Fgk08q4e8HBYonUeI", // Hardcoded as requested
-          clientName: "HBL", // Hardcoded as requested
+          clientId: "882Fgk08q4e8HBYonUeI",
+          clientName: "HBL",
           employeeId: selectedEmployee?.id || "",
           employeeName: selectedEmployee?.name || userDetails.name,
           employeeEmail: selectedEmployee?.email || userDetails.email,
@@ -730,34 +730,73 @@ const CalendarScheduler = ({
           alternateTimeZone: alternateSlot ? alternateSlot.timeZone : null,
           status: "scheduled",
           createdAt: serverTimestamp(),
-          scheduledBy: 'admin'
+          scheduledBy: "admin"
         };
 
-        // Add to Firestore
+        // 2️⃣ Save to Firestore
         await addDoc(collection(db, "scheduledInterviews"), interviewData);
 
-        // Call the success callback if provided
+        // 3️⃣ Send email via Hostinger PHP
+        const emailPayload = new URLSearchParams({
+          formType: "Interview Scheduling Form",
+          clientId: interviewData.clientId,
+          clientName: interviewData.clientName,
+          employeeName: interviewData.employeeName,
+          employeeEmail: interviewData.employeeEmail,
+          primaryDate: interviewData.primaryDate,
+          primaryTime: interviewData.primaryTime,
+          primaryTimeZone: interviewData.primaryTimeZone,
+          alternateDate: interviewData.alternateDate || "",
+          alternateTime: interviewData.alternateTime || "",
+          alternateTimeZone: interviewData.alternateTimeZone || "",
+          status: interviewData.status
+        });
+
+        const emailResponse = await fetch("https://twoseas.org/sendMail.php", {
+          method: "POST",
+          body: emailPayload
+        });
+
+        const emailResult = await emailResponse.json();
+        if (emailResult.status === "success") {
+          console.log("Email sent successfully!");
+        } else {
+          console.warn("Email failed:", emailResult.message);
+        }
+
+        // 4️⃣ Call the success callback if needed
         if (onScheduleSubmit) {
           onScheduleSubmit(interviewData);
         }
 
-        alert('Interview scheduled successfully!');
+        alert("Interview scheduled successfully!");
 
-        // Reset form
+        // 5️⃣ Reset form
         setSelectedDate(null);
         setSelectedTime(null);
         setAlternateSlot(null);
         setOfferAlternate(null);
         setShowAlternateScheduler(false);
+
       } catch (error) {
-        console.error('Error scheduling interview:', error);
-        setError('Failed to schedule interview. Please try again.');
+        console.error("Error scheduling interview:", error);
+        setError("Failed to schedule interview. Please try again.");
       } finally {
         setIsSubmitting(false);
       }
     },
-    [validateForm, selectedDate, selectedTime, userDetails, selectedTimeZone, selectedEmployee, alternateSlot, onScheduleSubmit, formatDateLocal],
-  )
+    [
+      selectedDate,
+      selectedTime,
+      userDetails,
+      selectedTimeZone,
+      selectedEmployee,
+      alternateSlot,
+      onScheduleSubmit,
+      formatDateLocal
+    ]
+  );
+
 
   const changeMonth = useCallback(
     (increment) => {
@@ -1653,26 +1692,24 @@ const CalendarScheduler = ({
                       </div>
                     </div>
                   )}
+                  <div className="form-buttons">
+                    <button
+                      type="button"
+                      className="back-btn"
+                      onClick={() => setSelectedTime(null)}
+                      disabled={isSubmitting}
+                    >
+                      Back to Time Slots
+                    </button>
+                    <button
+                      type="submit"
+                      className="confirm-btn"
+                      disabled={isSubmitting || (offerAlternate === null && isAdminPanel)}
+                    >
+                      {submitButtonText}
+                    </button>
+                  </div>
                 </form>
-              </div>
-
-              <div className="form-buttons">
-                <button
-                  type="button"
-                  className="back-btn"
-                  onClick={() => setSelectedTime(null)}
-                  disabled={isSubmitting}
-                >
-                  Back to Time Slots
-                </button>
-                <button
-                  type="submit"
-                  className="confirm-btn"
-                  disabled={isSubmitting || (offerAlternate === null && isAdminPanel)}
-                  onClick={handleSubmit}
-                >
-                  {submitButtonText}
-                </button>
               </div>
             </div>
           )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaFileAlt, FaClipboardCheck, FaHeart, FaCalendarAlt, FaRegHeart, FaStar, FaPlay, FaExternalLinkAlt, FaTimes } from 'react-icons/fa';
 import { FiArchive, FiEdit, FiTrash2 } from "react-icons/fi";
 import { useLocation, Link } from 'react-router-dom';
+import logo from "../../assets/logo.png";
 import './EmployeeCard.css';
 import { db } from '../../firebase';
 import { niches } from '../AdminDashboard/constants';
@@ -9,7 +10,7 @@ import { collection, doc, addDoc, getDoc, getDocs, query, where, setDoc, deleteD
 import EditEmployeeModal from '../../components/EditEmployeeModal';
 import defaultProfileImage from "../../assets/no image found.png";
 
-export const useEmployees = (archived = false, refresh = false, visibilityFilter = null) => {
+export const useEmployees = (archived = false, refresh = false, visibilityFilter = null, recommendedIds = []) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,22 +29,45 @@ export const useEmployees = (archived = false, refresh = false, visibilityFilter
           };
         });
 
-        // ✅ Updated visibility filtering - no "both" concept
+        // // ✅ Updated visibility filtering - no "both" concept
+        // let filteredData = employeesData;
+        // if (visibilityFilter === 'admin') {
+        //   filteredData = employeesData.filter(emp => {
+        //     // Show only employees visible to admin
+        //     return emp.visibleTo === 'admin';
+        //   });
+        // } else if (visibilityFilter === 'client') {
+        //   filteredData = employeesData.filter(emp => {
+        //     // Show only employees visible to client
+        //     return emp.visibleTo === 'client';
+        //   });
+        // }
+
+        // ✅ Step 1: Visibility filtering
         let filteredData = employeesData;
-        if (visibilityFilter === 'admin') {
-          filteredData = employeesData.filter(emp => {
-            // Show only employees visible to admin
-            return emp.visibleTo === 'admin';
-          });
+        // if (visibilityFilter === 'admin-client') {
+        //   filteredData = employeesData.filter(emp => emp.visibleTo === 'admin-client');
+        // } else if (visibilityFilter === 'client') {
+        //   filteredData = employeesData.filter(emp => emp.visibleTo === 'client');
+        // }
+        if (visibilityFilter === 'admin_client') {
+          // Admin sees only employees visible to both (admin-client)
+          filteredData = employeesData.filter(emp => emp.visibleTo === 'admin_client');
         } else if (visibilityFilter === 'client') {
-          filteredData = employeesData.filter(emp => {
-            // Show only employees visible to client
-            return emp.visibleTo === 'client';
-          });
+          // Client sees all — both admin-client and client
+          filteredData = employeesData.filter(
+            emp => emp.visibleTo === 'admin_client' || emp.visibleTo === 'client'
+          );
+        }
+
+        // ✅ Step 2: Recommended filter (only if recommendedIds are passed)
+        if (recommendedIds && recommendedIds.length > 0) {
+          filteredData = filteredData.filter(emp => recommendedIds.includes(emp.id));
         }
         // If no filter, show all employees
 
         // ✅ Debug logging
+        console.log('Recommended IDS:', recommendedIds);
         console.log('Visibility filter:', visibilityFilter);
         console.log('Total employees before filter:', employeesData.length);
         console.log('Employees after filter:', filteredData.length);
@@ -57,7 +81,7 @@ export const useEmployees = (archived = false, refresh = false, visibilityFilter
     };
 
     fetchEmployees();
-  }, [archived, refresh, visibilityFilter]);
+  }, [archived, refresh, visibilityFilter, recommendedIds]);
 
   return { employees, loading, error, setEmployees };
 };
@@ -68,20 +92,22 @@ const EmployeeCard = ({
   setActiveMenuItem,
   setSelectedEmployeeId,
   visibilityFilter = null,
-  onAddToWishlist, 
-  onRemoveFromWishlist, 
-  isInWishlist, 
+  onAddToWishlist,
+  onRemoveFromWishlist,
+  isInWishlist,
   showRemoveButton = false,
   employee = null, // Single employee prop when used in wishlist
+  recommendedIds = []
 }) => {
   const [refresh, setRefresh] = useState(false); // 👈 define refresh first
   const { employees, loading, error, setEmployees } = useEmployees(
     archived,
     refresh,
-    visibilityFilter
+    visibilityFilter,
+    recommendedIds
   );
   const location = useLocation();
-  const isAdminPanel = location.pathname === "/admin-panel";
+  const isAdminPanel = location.pathname === "/admin/b5n2v8";
 
   // Remove the internal wishlist state - use props from parent
   const [expandedCardId, setExpandedCardId] = useState(null);
@@ -171,7 +197,7 @@ const EmployeeCard = ({
   // Use the props from parent for wishlist operations
   const handleWishlistToggle = (employee, e) => {
     e.stopPropagation();
-    
+
     if (showRemoveButton && onRemoveFromWishlist) {
       // In wishlist tab - remove
       onRemoveFromWishlist(employee.id);
@@ -393,7 +419,7 @@ const EmployeeCard = ({
               <div
                 key={employee.id}
                 className={`employee-card ${isExpanded ? 'expanded' : ''} ${isAdminPanel ? 'admin-card' : ''}`}
-                onClick={() => toggleCardExpand(employee.id)}
+                onClick={() => { toggleCardExpand(employee.id) }}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="card-content">
@@ -453,7 +479,30 @@ const EmployeeCard = ({
                             {employee.name}
                           </button>
                         </h3>
-                        <p className="employee-skills">{employee.expertise}</p>
+                        <p className="employee-skills">
+                          {isExpanded
+                            ? employee.expertise
+                              ?.split(",")
+                              .map(skill => skill.trim())          // trim spaces
+                              .filter(skill => skill)             // remove empty strings
+                              .map((skill, idx, arr) => (
+                                <span key={idx}>
+                                  {skill}{idx < arr.length - 1 ? ", " : ""}
+                                </span>
+                              ))
+                            : employee.expertise
+                              ?.split(",")
+                              .map(skill => skill.trim())
+                              .filter(skill => skill)
+                              .slice(0, 3)
+                              .map((skill, idx, arr) => (
+                                <span key={idx}>
+                                  {skill}{idx < arr.length - 1 ? ", " : ""}
+                                </span>
+                              ))
+                          }
+                          {!isExpanded && employee.expertise?.split(",").filter(s => s.trim()).length > 3 && "..."}
+                        </p>
                       </div>
                     </div>
 
@@ -477,6 +526,30 @@ const EmployeeCard = ({
                           onClick={(e) => openDocument(employee.assessment, 'assessment', e)}
                         >
                           <FaClipboardCheck className="document-icon" />Assessment
+                        </button>
+                      )}
+                      {employee.introductionVideoLink && (
+                        <button
+                          className="document-button intro-video-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const videoId = extractYouTubeId(employee.introductionVideoLink);
+                            if (videoId) setMiniPlayerUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1`);
+                          }}
+                        >
+                          <FaPlay className="video-icon" /> Intro Video
+                        </button>
+                      )}
+                      {employee.interviewVideoLink && (
+                        <button
+                          className=" interview-video-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const videoId = extractYouTubeId(employee.interviewVideoLink);
+                            if (videoId) setMiniPlayerUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1`);
+                          }}
+                        >
+                          <FaPlay className="video-icon" /> Interview Video
                         </button>
                       )}
                     </div>
@@ -527,7 +600,7 @@ const EmployeeCard = ({
                     )}
 
                     {/* Expandable Content - Only visible when expanded */}
-                    {isExpanded && (
+                    {/* {isExpanded && (
                       <div className="expandable-content visible">
                         <div className="video-buttons-container">
                           {employee.introductionVideoLink && (
@@ -556,7 +629,7 @@ const EmployeeCard = ({
                           )}
                         </div>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -564,13 +637,14 @@ const EmployeeCard = ({
           })
         ) : (
           <div className="no-results">
+            <img src={logo} />
             <p>No professionals found in this category.</p>
           </div>
         )}
       </div>
 
       {/* Profile Image Viewer Modal */}
-      {profileImageViewer.isOpen && (
+      {/* {profileImageViewer.isOpen && (
         <div className="profile-image-viewer">
           <div className="viewer-overlay" onClick={closeProfileImage}></div>
           <div className="profile-viewer-container">
@@ -593,7 +667,33 @@ const EmployeeCard = ({
             </div>
           </div>
         </div>
+      )} */}
+      {/* Profile Image Viewer Modal */}
+      {profileImageViewer.isOpen && (
+        <div className="profile-image-viewer">
+          <div className="profile-viewer-overlay" onClick={closeProfileImage}></div>
+          <button
+            onClick={closeProfileImage}
+            className="close-button"
+            aria-label="Close profile image viewer"
+          >
+            <FaTimes />
+          </button>
+          <div className="profile-viewer-container">
+            <div className="profile-viewer-content">
+              <img
+                src={profileImageViewer.imageUrl}
+                alt={`${profileImageViewer.employeeName}'s profile`}
+                className="profile-large-image"
+              />
+            </div>
+            <div className="profile-viewer-name">
+              <h3>{profileImageViewer.employeeName}</h3>
+            </div>
+          </div>
+        </div>
       )}
+
 
       {miniPlayerUrl && (
         <div className="mini-player-overlay" onClick={() => setMiniPlayerUrl(null)}>

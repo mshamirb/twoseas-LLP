@@ -52,7 +52,7 @@ p {
 .solution-link,
 .profile-link {
   /* background-color: #09034b; */
-  background-color: #393c69;
+  background-color: #09034b;
   color: #ffffff;
   border: none;
   padding: 0.8rem 1.5rem;
@@ -64,7 +64,6 @@ p {
   display: inline-block;
 }
 
-.cta-button:hover,
 .solution-link:hover,
 .profile-link:hover {
   background-color: #d4d7dc;
@@ -251,8 +250,10 @@ p {
 }
 
 .theme-candyfloss {
-  --bg: #e0ffe0;   /* light green */
-  --text: #06a3c2; /* candy blue */
+  --bg: #e0ffe0;
+  /* light green */
+  --text: #06a3c2;
+  /* candy blue */
 }
 
 body {

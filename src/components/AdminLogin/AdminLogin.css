@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #07a2c1;
+  background: linear-gradient(135deg, #06a3c2, #2a2d7c);
   padding: 20px;
 }
 
@@ -86,7 +86,7 @@
 .admin-login-button {
   width: 100%;
   padding: 12px;
-  background-color: #444772;
+  background: linear-gradient(135deg, #06a3c2, #2a2d7c);
   color: white;
   border: none;
   border-radius: 6px;

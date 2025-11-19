@@ -19,7 +19,6 @@ const Navbar = () => {
             desc: "Expert insurance professionals for all your coverage needs.",
             details: {
                 description: "We provide a wide array of experienced workforce and fresh graduates wanting to work in the niche of Insurance. Our reps are pre-vetted, interviewed, and reference checked through the two seas 5 step method. ",
-                hiringProcess: "Our rigorous process ensures we find insurance experts with the right technical knowledge and customer service skills. Want to know if we have what you're looking for?"
             }
         },
         {
@@ -28,7 +27,7 @@ const Navbar = () => {
             icon: "📈",
             desc: "Revenue-driving professionals for your growth needs.",
             details: {
-                description: "Our sales and marketing team consist of outbound and inbound telemarketers, sales executives, business developers, and account executives. Focusing on both B2B and B2C expertise.",
+                description: "Our sales and marketing team consist of outbound and inbound telemarketers, sales executives and account executives, as well as social media managers.",
                 hiringProcess: "Candidates undergo practical sales simulations and marketing strategy assessments."
             }
         },
@@ -44,14 +43,31 @@ const Navbar = () => {
         },
         {
             id: 'virtual-professionals',
+            title: "Virtual Assistants",
+            displayTitle: "Virtual",
+            icon: "👥",
+            desc: "Skilled remote support for your business needs.",
+            subMenu: [
+                { name: "Medical", id: "medical" },
+                { name: "Dental", id: "dental" },
+                { name: "Insurance", id: "insurance" },
+                { name: "Legal", id: "legal" },
+            ],
+            details: {
+                description:
+                    "Our Virtual Professionals can take on a number of back office tasks for our clients including data entry, CRM logins, customer support, front desk staff, back-office support, calendar management, billings, verification, note taking, and assistance to Executives. Our virtual professionals maintain data security whilst performing their job as per their contract.",
+            },
+        },
+        {
+            id: 'virtual-professionals',
             title: "Virtual Professionals",
             displayTitle: "Virtual",
             icon: "👥",
             desc: "Skilled remote support for your business needs.",
             details: {
-                description: "Our Virtual Professionals can take on a number of back office tasks for our clients including data entry, CRM logins, customer support, front desk staff, back-office support, calendar management, billings, verification, note taking, and assistance to Executives. Our virtual professionals maintain data security whilst performing their job as per their contract.",
-                // hiringProcess: "Virtual professionals are tested on time management, communication skills, and technical proficiency."
-            }
+                description:
+                    "Our Virtual Professionals can take on a number of back office tasks for our clients including data entry, CRM logins, customer support, front desk staff, back-office support, calendar management, billings, verification, note taking, and assistance to Executives. Our virtual professionals maintain data security whilst performing their job as per their contract.",
+            },
         },
         {
             id: 'it-telecom',
@@ -59,7 +75,7 @@ const Navbar = () => {
             icon: "💻",
             desc: "Technical experts for your digital infrastructure.",
             details: {
-                description: "We provide back end/front-end software engineers, voice engineers, application developers, cyber security specialists as well as technical support professionals to our clients.",
+                description: "We provide back end/front-end software engineers, voice engineers, application developers, cyber security specialists as well as technical support professionals to our clients on demand.",
                 // hiringProcess: "IT candidates complete coding challenges and infrastructure troubleshooting scenarios."
             }
         }
@@ -84,7 +100,15 @@ const Navbar = () => {
     };
 
     const handleServiceClick = (service) => {
-        navigate(`/services/${service.id}`, { state: { service } });
+        // If sub-service like medical/dental/legal
+        if (service.parent) {
+            navigate(`/services/${service.id}`, {
+                state: { service: { ...service, parent: service.parent } },
+            });
+        } else {
+            navigate(`/services/${service.id}`, { state: { service } });
+        }
+
         setIsMobileMenuOpen(false);
         setIsDropdownOpen(false);
     };
@@ -130,13 +154,28 @@ const Navbar = () => {
                         {isDropdownOpen && (
                             <div className="dropdown-menu">
                                 {services.map(service => (
-                                    <div
-                                        key={service.id}
-                                        className={`dropdown-item ${isActive(`/services/${service.id}`) ? 'black-text' : ''}`}
-                                        onClick={() => handleServiceClick(service)}
-                                    >
-                                        {/* <span className="dropdown-icon">{service.icon}</span> */}
-                                        {service.title}
+                                    <div key={service.id} className="dropdown-item-wrapper">
+                                        <div
+                                            className={`dropdown-item ${isActive(`/services/${service.id}`) ? 'black-text' : ''}`}
+                                            onClick={() => handleServiceClick(service)}
+                                        >
+                                            {service.title}
+                                        </div>
+
+                                        {service.id === 'virtual-professionals' && service.subMenu && (
+                                            <div className="sub-dropdown">
+                                                {service.subMenu.map((sub, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="sub-dropdown-item"
+                                                        onClick={() => handleServiceClick({ ...sub, parent: service })}
+                                                    >
+                                                        {sub.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                     </div>
                                 ))}
                             </div>

@@ -46,6 +46,8 @@ import ClientSchedule from "./pages/ClientSchedule/ClientSchedule.jsx";
 import ClientProfile from "./pages/ClientProfile/ClientProfile.jsx";
 
 import { ThemeProvider } from "./context/ThemeContext";
+import ClientProtectedRoute from "./components/ProtectedRoute/ClientProtectedRoute.jsx";
+import AdminProtectedRoute from "./components/ProtectedRoute/AdminProtectedRoute.jsx";
 
 function Layout() {
   const location = useLocation();
@@ -99,27 +101,27 @@ function Layout() {
           <Route path="/employee/:id" element={<EmployeeDetail />} />
 
           {/* ✅ CORRECTED CRYPTIC ADMIN ROUTES */}
-          <Route path="/admin/x7k9p2" element={<ModernAdminPanel />} />
-          <Route path="/admin/z4m8q1" element={<ModernAdminPanel />} />
-          <Route path="/admin/r3t6y0" element={<ModernAdminPanel />} />
-          <Route path="/admin/b5n2v8" element={<ModernAdminPanel />} />
-          <Route path="/admin/c9j7x3" element={<ModernAdminPanel />} />
-          <Route path="/admin/k8h4d6" element={<ModernAdminPanel />} />
-          <Route path="/admin/w1f5s9" element={<ModernAdminPanel />} />
-          <Route path="/admin/l2m7p4" element={<ModernAdminPanel />} />
-          <Route path="/admin/g6t8k2" element={<ModernAdminPanel />} />
-          <Route path="/admin/v3q9n5" element={<ModernAdminPanel />} />
-          
+          <Route path="/admin/x7k9p2" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/z4m8q1" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/r3t6y0" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/b5n2v8" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/c9j7x3" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/k8h4d6" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/w1f5s9" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/l2m7p4" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/g6t8k2" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+          <Route path="/admin/v3q9n5" element={<AdminProtectedRoute><ModernAdminPanel /></AdminProtectedRoute>} />
+
           {/* ✅ Redirect old admin routes to cryptic dashboard */}
           <Route path="/admin-panel" element={<Navigate to="/admin/x7k9p2" replace />} />
-          <Route path="/admin-dashboard" element={<Navigate to="/admin/x7k9p2" replace />} />
-          
+          <Route path="/admin-dashboard" element={<AdminProtectedRoute><Navigate to="/admin/x7k9p2" replace /></AdminProtectedRoute>} />
+
           {/* ✅ Catch-all for invalid admin paths (must be at the end) */}
           <Route path="/admin/*" element={<Navigate to="/admin/x7k9p2" replace />} />
 
           {/* CLIENT ROUTES */}
           <Route path="/client-login" element={<ClientLogin />} />
-          <Route path="/client-dashboard" element={<ClientDashboard />} />
+          <Route path="/client-dashboard" element={<ClientProtectedRoute><ClientDashboard /></ClientProtectedRoute>} />
           <Route path="/client-employees" element={<ClientEmployees />} />
           <Route path="/client-schedule" element={<ClientSchedule />} />
           <Route path="/client-profile" element={<ClientProfile />} />

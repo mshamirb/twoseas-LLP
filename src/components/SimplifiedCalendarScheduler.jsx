@@ -9,7 +9,7 @@ import {
   FaTimes,
   FaChevronDown
 } from "react-icons/fa"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc, serverTimestamp, getDocs, query, where, updateDoc, arrayUnion } from "firebase/firestore"
 import { db } from "../firebase"
 import { getBlockedSlotsForDate } from "../services/blockedSlotsService"
 
@@ -19,6 +19,7 @@ export const regionalTimeZones = {
     { value: "America/New_York", label: "Eastern Time" },
     { value: "America/Chicago", label: "Central Time" },
     { value: "America/Los_Angeles", label: "Pacific Time" },
+    { value: "America/Denver", label: "Mountain Time" }
   ],
   "Europe & Africa": [
     { value: "Europe/London", label: "London, UK" },
@@ -31,11 +32,18 @@ export const regionalTimeZones = {
     { value: "Asia/Dubai", label: "Dubai, UAE" },
     { value: "Asia/Singapore", label: "Singapore" },
     { value: "Asia/Tokyo", label: "Tokyo, Japan" },
+  ],
+  "Australia & Oceania": [
+    { value: "Australia/Sydney", label: "Sydney, Australia" },
+    { value: "Australia/Melbourne", label: "Melbourne, Australia" },
+    { value: "Australia/Canberra", label: "Canberra, Australia" },
+    { value: "Australia/Perth", label: "Perth, Australia" },
+    { value: "Pacific/Auckland", label: "Auckland, New Zealand" },
   ]
 }
 
 const SimplifiedCalendarScheduler = ({
-  selectedEmployee = null,
+  selectedEmployee,
   onScheduleSubmit,
   onClose
 }) => {
@@ -44,13 +52,13 @@ const SimplifiedCalendarScheduler = ({
   const [selectedTime, setSelectedTime] = useState(null)
   const [selectedTimeZone, setSelectedTimeZone] = useState("Asia/Karachi")
   const [showAlternateQuestion, setShowAlternateQuestion] = useState(false)
-  
+
   // Alternate time states
   const [alternateDate, setAlternateDate] = useState(null)
   const [alternateTime, setAlternateTime] = useState(null)
   const [selectingAlternate, setSelectingAlternate] = useState(false)
   const [alternateOffered, setAlternateOffered] = useState(false) // Track if alternate was offered
-  
+
   // Other states
   const [timeSlots, setTimeSlots] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -58,7 +66,7 @@ const SimplifiedCalendarScheduler = ({
   const [error, setError] = useState("")
   const [showRegionDropdown, setShowRegionDropdown] = useState(false)
   const [currentTime, setCurrentTime] = useState("")
-  
+
   // Calendar navigation
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
@@ -104,58 +112,100 @@ const SimplifiedCalendarScheduler = ({
     return `${year}-${month}-${day}`
   }, [])
 
+  // const generateTimeSlots = useCallback(async (date, timeZone = selectedTimeZone) => {
+  //   const slots = []
+  //   const startHour = 9 // 9 AM
+  //   const endHour = 21 // 9 PM
+  //   const dateString = formatDateLocal(date)
+
+  //   try {
+  //     const blockedSlotsForDate = await getBlockedSlotsForDate(dateString)
+  //     console.log("Block Slots", blockedSlotsForDate); 
+
+  //     for (let hour = startHour; hour <= endHour; hour++) {
+  //       const time24 = `${hour.toString().padStart(2, "0")}:00:00`
+  //       const time12 = new Date(date)
+  //       time12.setHours(hour, 0, 0, 0)
+
+  //       const displayTime = time12.toLocaleTimeString("en-US", {
+  //         hour: "numeric",
+  //         minute: "2-digit",
+  //         hour12: true,
+  //         timeZone: timeZone,
+  //       })
+
+  //       const isBlocked = blockedSlotsForDate.some((slot) => slot.time === time24)
+
+  //       slots.push({
+  //         systemTime: time24,
+  //         displayTime: displayTime,
+  //         isAvailable: !isBlocked,
+  //       })
+  //     }
+  //   } catch (error) {
+  //     console.error("Error generating slots:", error)
+  //     // Fallback
+  //     for (let hour = startHour; hour <= endHour; hour++) {
+  //       const time12 = new Date(date)
+  //       time12.setHours(hour, 0, 0, 0)
+  //       slots.push({
+  //         systemTime: `${hour.toString().padStart(2, "0")}:00:00`,
+  //         displayTime: time12.toLocaleTimeString("en-US", {
+  //           hour: "numeric",
+  //           minute: "2-digit",
+  //           hour12: true,
+  //           timeZone: timeZone,
+  //         }),
+  //         isAvailable: true,
+  //       })
+  //     }
+  //   }
+
+  //   return slots
+  // }, [selectedTimeZone, formatDateLocal])
+
+
+  // STEP 5: Handle "No" - save to Firebase (DEFINE THIS FIRST)
+  const [bookedDates, setBookedDates] = useState({})
   const generateTimeSlots = useCallback(async (date, timeZone = selectedTimeZone) => {
-    const slots = []
-    const startHour = 9 // 9 AM
-    const endHour = 21 // 9 PM
-    const dateString = formatDateLocal(date)
+    const slots = [];
+    const startHour = 9; // 9 AM
+    const endHour = 21; // 9 PM
+    const dateString = formatDateLocal(date);
 
     try {
-      const blockedSlotsForDate = await getBlockedSlotsForDate(dateString)
+      const blockedSlotsForDate = await getBlockedSlotsForDate(dateString);
+      const bookedTimesForDate = bookedDates[dateString] || [];
 
       for (let hour = startHour; hour <= endHour; hour++) {
-        const time24 = `${hour.toString().padStart(2, "0")}:00:00`
-        const time12 = new Date(date)
-        time12.setHours(hour, 0, 0, 0)
+        const time24 = `${hour.toString().padStart(2, "0")}:00:00`;
+        const time12 = new Date(date);
+        time12.setHours(hour, 0, 0, 0);
 
         const displayTime = time12.toLocaleTimeString("en-US", {
           hour: "numeric",
           minute: "2-digit",
           hour12: true,
-          timeZone: timeZone,
-        })
+          timeZone,
+        });
 
-        const isBlocked = blockedSlotsForDate.some((slot) => slot.time === time24)
+        const isBlocked =
+          blockedSlotsForDate.some((slot) => slot.time === time24) ||
+          bookedTimesForDate.includes(time24);
 
         slots.push({
           systemTime: time24,
-          displayTime: displayTime,
+          displayTime,
           isAvailable: !isBlocked,
-        })
+        });
       }
     } catch (error) {
-      console.error("Error generating slots:", error)
-      // Fallback
-      for (let hour = startHour; hour <= endHour; hour++) {
-        const time12 = new Date(date)
-        time12.setHours(hour, 0, 0, 0)
-        slots.push({
-          systemTime: `${hour.toString().padStart(2, "0")}:00:00`,
-          displayTime: time12.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-            timeZone: timeZone,
-          }),
-          isAvailable: true,
-        })
-      }
+      console.error("Error generating slots:", error);
     }
 
-    return slots
-  }, [selectedTimeZone, formatDateLocal])
+    return slots;
+  }, [selectedTimeZone, formatDateLocal, bookedDates]);
 
-  // STEP 5: Handle "No" - save to Firebase (DEFINE THIS FIRST)
   const handleNoAlternate = useCallback(async () => {
     setIsSubmitting(true)
     setError('')
@@ -163,7 +213,15 @@ const SimplifiedCalendarScheduler = ({
     try {
       // Get client data from localStorage
       const storedUser = JSON.parse(localStorage.getItem("clientUser"))
-      
+      // Convert selected date + time to UTC
+      const localDateTime = new Date(`${formatDateLocal(selectedDate)}T${selectedTime}`);
+      const utcTime = localDateTime.toLocaleTimeString('en-US', {
+        timeZone: 'UTC',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
       // Create interview data object
       const interviewData = {
         clientId: storedUser?.clientId || "882Fgk08q4e8HBYonUeI",
@@ -173,11 +231,12 @@ const SimplifiedCalendarScheduler = ({
         employeeEmail: selectedEmployee?.email || '',
         primaryDate: formatDateLocal(selectedDate),
         primaryTime: selectedTime,
+        primaryTimeUTC: utcTime,
         primaryTimeZone: selectedTimeZone,
         alternateDate: alternateDate ? formatDateLocal(alternateDate) : null,
         alternateTime: alternateTime || null,
         alternateTimeZone: alternateTime ? selectedTimeZone : null,
-        status: "scheduled",
+        status: "In Process",
         createdAt: serverTimestamp(),
         scheduledBy: 'client',
         clientUserId: storedUser?.clientId,
@@ -193,7 +252,7 @@ const SimplifiedCalendarScheduler = ({
       }
 
       setIsSuccess(true)
-      
+
     } catch (error) {
       console.error('Error scheduling interview:', error)
       setError('Failed to schedule interview. Please try again.')
@@ -237,19 +296,96 @@ const SimplifiedCalendarScheduler = ({
     return daysArray
   }, [currentMonth, currentYear])
 
+  // const [bookedDates, setBookedDates] = useState({})
+  // useEffect(() => {
+  //   console.log(selectedEmployee, "Selected Employee")
+  // const fetchBookedDates = async () => {
+  //   if (!selectedEmployee?.id) return;
+
+  //   try {
+  //     const q = query(
+  //       collection(db, "scheduledInterviews"),
+  //       where("employeeId", "==", selectedEmployee.id)
+  //     );
+
+  //     const querySnapshot = await getDocs(q);
+  //     const dates = querySnapshot.docs.map(doc => doc.data().primaryDate);
+  //     setBookedDates(dates);
+  //     console.log("Booked Dates for Employee:", dates);
+  //   } catch (error) {
+  //     console.error("Error fetching booked dates:", error);
+  //   }
+  // };
+  // fetchBookedDates();
+  // }, [selectedEmployee?.id]);
+  useEffect(() => {
+    if (!selectedEmployee?.id) return;
+
+    const fetchBookedData = async () => {
+      try {
+        const q = query(
+          collection(db, "scheduledInterviews"),
+          where("employeeId", "==", selectedEmployee.id)
+        );
+        const querySnapshot = await getDocs(q);
+
+        const dataMap = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const date = data.primaryDate;
+          const time = data.primaryTime;
+
+          if (!dataMap[date]) dataMap[date] = [];
+          if (time) dataMap[date].push(time);
+        });
+
+        setBookedDates(dataMap);
+        console.log("Booked Data:", dataMap);
+      } catch (error) {
+        console.error("Error fetching booked data:", error);
+      }
+    };
+
+    fetchBookedData();
+  }, [selectedEmployee?.id]);
+
+  //   const isDateDisabled = useCallback((date) => {
+  //   if (!date) return true
+
+  //   const today = new Date()
+  //   today.setHours(0, 0, 0, 0)
+
+  //   // Disable past dates
+  //   if (date < today) return true
+
+  //   // Disable weekends
+  //   const dayOfWeek = date.getDay()
+  //   if (dayOfWeek === 0 || dayOfWeek === 6) return true
+
+  //   // Disable booked dates (from Firestore)
+  //   const dateStr = formatDateLocal(date)
+  //   if (bookedDates.includes(dateStr)) return true
+
+  //   return false
+  // }, [bookedDates, formatDateLocal])
   const isDateDisabled = useCallback((date) => {
-    if (!date) return true
+    if (!date) return true;
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    if (date < today) return true
+    // Disable past & weekends
+    const dayOfWeek = date.getDay();
+    if (date < today || dayOfWeek === 0 || dayOfWeek === 6) return true;
 
-    const dayOfWeek = date.getDay()
-    if (dayOfWeek === 0 || dayOfWeek === 6) return true
+    // Disable if all time slots are booked
+    const dateStr = formatDateLocal(date);
+    const bookedTimes = bookedDates[dateStr] || [];
+    const totalSlots = 13; // 9am–9pm
 
-    return false
-  }, [])
+    return bookedTimes.length >= totalSlots;
+  }, [bookedDates, formatDateLocal]);
+
 
   const handleDateClick = useCallback(async (date) => {
     if (!date || isDateDisabled(date)) return
@@ -345,7 +481,7 @@ const SimplifiedCalendarScheduler = ({
   const renderTimeZoneSelector = () => (
     <div className="time-zone-selector">
       <FaGlobe className="time-zone-icon" />
-      
+
       <div className="regional-dropdown-container">
         <button
           className="regional-dropdown-toggle"
@@ -388,9 +524,9 @@ const SimplifiedCalendarScheduler = ({
       <div className="scheduler-icon">
         <FaCalendarAlt />
       </div>
-      
+
       {renderTimeZoneSelector()}
-      
+
       <div className="calendar-header">
         <button className="month-nav-btn" onClick={() => changeMonth(-1)}>
           <FaChevronLeft />
@@ -438,9 +574,9 @@ const SimplifiedCalendarScheduler = ({
       return (
         <div className="calendar-view">
           <h3>Select Alternate Date</h3>
-          
+
           {renderTimeZoneSelector()}
-          
+
           <div className="calendar-header">
             <button className="month-nav-btn" onClick={() => changeMonth(-1)}>
               <FaChevronLeft />
@@ -508,7 +644,7 @@ const SimplifiedCalendarScheduler = ({
                 onClick={() => slot.isAvailable && handleTimeClick(slot.systemTime)}
               >
                 {slot.displayTime}
-                {!slot.isAvailable && <span className="blocked-label">Booked</span>}
+                {!slot.isAvailable && <span className="blocked-label"> Booked</span>}
               </button>
             ))
           ) : (
@@ -530,9 +666,9 @@ const SimplifiedCalendarScheduler = ({
           }}>
             {selectingAlternate ? "Back to Alternate Calendar" : "Back to Calendar"}
           </button>
-          
+
           {selectingAlternate && alternateTime && (
-            <button 
+            <button
               className="confirm-btn"
               onClick={() => {
                 setSelectingAlternate(false)
@@ -551,13 +687,13 @@ const SimplifiedCalendarScheduler = ({
   const renderAlternateQuestion = () => (
     <div className="alternate-question-section">
       <h3>Schedule Confirmation</h3>
-      
+
       <div className="selected-slot-info">
         <p><strong>Primary Time Selected:</strong></p>
         <p className="slot-details">
           {formatDateDisplay(selectedDate)}, {selectedTime} ({currentTimezoneLabel})
         </p>
-        
+
         {alternateDate && alternateTime && (
           <>
             <p><strong>Alternate Time Selected:</strong></p>
@@ -585,8 +721,8 @@ const SimplifiedCalendarScheduler = ({
               <button className="yes-btn" onClick={handleYesAlternate}>
                 Yes, select alternate date & time
               </button>
-              <button 
-                className="no-btn" 
+              <button
+                className="no-btn"
                 onClick={handleNoAlternate}
                 disabled={isSubmitting}
               >
@@ -608,8 +744,8 @@ const SimplifiedCalendarScheduler = ({
               <strong>Confirm your interview schedule:</strong>
             </p>
             <div className="yes-no-buttons-large">
-              <button 
-                className="no-btn" 
+              <button
+                className="no-btn"
                 onClick={handleNoAlternate}
                 disabled={isSubmitting}
               >

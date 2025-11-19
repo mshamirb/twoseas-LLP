@@ -223,7 +223,7 @@ const Careers = () => {
                                         >
                                             Apply for this Position
                                         </button>
-                                        <a
+                                        {/* <a
                                             href={`https://www.indeed.com/jobs?q=${encodeURIComponent(selectedJob.title)}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
@@ -238,7 +238,7 @@ const Careers = () => {
                                             className="apply-btn apply-linkedin"
                                         >
                                             <FaLinkedin /> Apply via LinkedIn
-                                        </a>
+                                        </a> */}
                                     </div>
 
                                     <div className="back-button-container">

@@ -1,6 +1,6 @@
 // src/pages/ClientLogin/ClientLogin.jsx
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import "./ClientLogin.css";
 
@@ -13,60 +13,103 @@ export default function ClientLogin() {
   const [isLocked, setIsLocked] = useState(false);
   const [lockTime, setLockTime] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
-const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(60);
 
-useEffect(() => {
-  let timer, warningTimer, countdownInterval;
+  // 🔹 Forgot Password States
+  const [showResetPopup, setShowResetPopup] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
 
-  const startTimers = () => {
-    // Clear existing timers
-    clearTimeout(timer);
-    clearTimeout(warningTimer);
-    clearInterval(countdownInterval);
+  // ✅ Function to reset password without old password
+  const handlePasswordReset = async () => {
+    if (!resetEmail || !newPassword) {
+      setResetMessage("Please fill in both fields.");
+      return;
+    }
 
-    // Show warning after 4 minutes (240000 ms)
-    warningTimer = setTimeout(() => {
-      setShowWarning(true);
-      setCountdown(60);
+    try {
+      const usersRef = collection(db, "clients-login");
+      const q = query(usersRef, where("email", "==", resetEmail));
+      const querySnapshot = await getDocs(q);
 
-      // Start countdown from 60 → 0
-      countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-          }
-          return prev - 1;
-        });
+      if (querySnapshot.empty) {
+        setResetMessage("❌ No user found with this email.");
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userRef = doc(db, "clients-login", userDoc.id);
+
+      await updateDoc(userRef, { password: newPassword });
+
+      setResetMessage("Password reset successfully!");
+      setNewPassword("");
+      // ✅ Wait 2 seconds, then go back to login mode
+      setTimeout(() => {
+        setShowResetPopup(false);
+        setResetMessage("");
+        setResetEmail("");
       }, 1000);
-    }, 4 * 60 * 1000);
-
-    // Auto logout after 5 minutes (300000 ms)
-    timer = setTimeout(() => {
-      localStorage.removeItem("clientUser");
-      localStorage.removeItem("clientUserEmail");
-      window.location.href = "/";
-    }, 5 * 60 * 1000);
+    } catch (error) {
+      console.error("Password reset error:", error);
+      setResetMessage("❌ Failed to reset password. Try again.");
+    }
   };
 
-  const resetTimer = () => {
-    setShowWarning(false);
-    setCountdown(60);
+
+  useEffect(() => {
+    let timer, warningTimer, countdownInterval;
+
+    const startTimers = () => {
+      // Clear existing timers
+      clearTimeout(timer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+
+      // Show warning after 4 minutes (240000 ms)
+      warningTimer = setTimeout(() => {
+        setShowWarning(true);
+        setCountdown(60);
+
+        // Start countdown from 60 → 0
+        countdownInterval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }, 4 * 60 * 1000);
+
+      // Auto logout after 5 minutes (300000 ms)
+      timer = setTimeout(() => {
+        localStorage.removeItem("clientUser");
+        localStorage.removeItem("clientUserEmail");
+        window.location.href = "/";
+      }, 5 * 60 * 1000);
+    };
+
+    const resetTimer = () => {
+      setShowWarning(false);
+      setCountdown(60);
+      startTimers();
+    };
+
+    // Activity events
+    const events = ["mousemove", "keydown", "click", "scroll"];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+
     startTimers();
-  };
 
-  // Activity events
-  const events = ["mousemove", "keydown", "click", "scroll"];
-  events.forEach(event => window.addEventListener(event, resetTimer));
-
-  startTimers();
-
-  return () => {
-    clearTimeout(timer);
-    clearTimeout(warningTimer);
-    clearInterval(countdownInterval);
-    events.forEach(event => window.removeEventListener(event, resetTimer));
-  };
-}, []);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(warningTimer);
+      clearInterval(countdownInterval);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, []);
 
   // Update countdown timer when locked
   useEffect(() => {
@@ -123,6 +166,27 @@ useEffect(() => {
       }
 
       const userData = querySnapshot.docs[0].data();
+
+      // 🔹 Step 2: Check client status from 'clients' collection
+      const clientsRef = collection(db, "clients");
+      const clientQuery = query(clientsRef, where("email", "==", email));
+      const clientSnapshot = await getDocs(clientQuery);
+
+      if (clientSnapshot.empty) {
+        handleFailedAttempt();
+        setError("No client record found.");
+        setLoading(false);
+        return;
+      }
+
+      const clientData = clientSnapshot.docs[0].data();
+
+      // 🔹 Step 3: Check if client status is Inactive
+      if (clientData.status && clientData.status.toLowerCase() === "inactive") {
+        setError("Your account is currently inactive. Please contact support.");
+        setLoading(false);
+        return;
+      }
 
       // Check if password matches
       if (userData.password === password) {
@@ -195,70 +259,118 @@ useEffect(() => {
     <div className="client-login">
       <div className="login-card">
         <h2 className="login-title">Two Seas <br />Client Portal</h2>
-        <p className="login-subtitle">Please sign in to continue</p>
 
-        {error && (
-          <div className={`error-message ${isLocked ? 'locked' : ''}`}>
-            {error}
-            {isLocked && (
-              <div className="countdown">
-                Time remaining: {formatTime(getTimeLeft())}
+        {!showResetPopup ? (
+          <>
+            <p className="login-subtitle">Please sign in to continue</p>
+
+            {error && (
+              <div className={`error-message ${isLocked ? 'locked' : ''}`}>
+                {error}
+                {isLocked && (
+                  <div className="countdown">
+                    Time remaining: {formatTime(getTimeLeft())}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLocked || loading}
-            />
-          </div>
+            <form onSubmit={handleLogin}>
+              <div className="input-group">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLocked || loading}
+                />
+              </div>
 
-          <div className="input-group">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLocked || loading}
-            />
-          </div>
+              <div className="input-group">
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLocked || loading}
+                />
+              </div>
 
-          <button
-            type="submit"
-            className={`login-btn ${isLocked ? 'disabled' : ''}`}
-            disabled={isLocked || loading}
-          >
-            {loading ? (
-              <span className="loading-text">Signing in...</span>
-            ) : isLocked ? (
-              <span className="locked-text">Account Locked</span>
-            ) : (
-              "Login"
+              <button
+                type="submit"
+                className={`login-btn ${isLocked ? 'disabled' : ''}`}
+                disabled={isLocked || loading}
+              >
+                {loading ? (
+                  <span className="loading-text">Signing in...</span>
+                ) : isLocked ? (
+                  <span className="locked-text">Account Locked</span>
+                ) : (
+                  "Login"
+                )}
+              </button>
+            </form>
+
+            <div className="login-footer">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowResetPopup(true);
+                  setResetMessage("");
+                  setResetEmail("");
+                  setNewPassword("");
+                }}
+              >
+                Forgot Password?
+              </a>
+            </div>
+
+            {failedAttempts > 0 && !isLocked && (
+              <div className="attempts-warning">
+                Failed attempts: {failedAttempts}/3
+              </div>
             )}
-          </button>
-        </form>
+          </>
+        ) : (
+          <>
+            <p className="login-subtitle">Reset your password</p>
 
-        <div className="login-footer">
-          <a href="#" onClick={(e) => {
-            e.preventDefault();
-            setError("Please contact Two Seas support to reset your password.");
-          }}>
-            Forgot Password?
-          </a>
-        </div>
+            <div className="input-group">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+              />
+            </div>
 
-        {failedAttempts > 0 && !isLocked && (
-          <div className="attempts-warning">
-            Failed attempts: {failedAttempts}/3
-          </div>
+            <div className="input-group">
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+
+            <button onClick={handlePasswordReset} className="login-btn">
+              Update Password
+            </button>
+
+            <div className="login-footer">
+              <a
+                href="#"
+                onClick={() => setShowResetPopup(false)}
+              >
+                Back to Login
+              </a>
+            </div>
+
+            {resetMessage && <p className="reset-message">{resetMessage}</p>}
+          </>
         )}
       </div>
       {showWarning && (

@@ -11,3 +11,75 @@
 .styled-input:focus {
   border-color: #06a3c2;
 }
+
+/* Base menu button */
+.admin-menu {
+  color: #fff;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* Hover effect (applies to all themes) */
+.admin-menu:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+/* Active state — for light/dark themes */
+.theme-light .admin-menu.active,
+.theme-dark .admin-menu.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  /* transparent overlay effect */
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* THEME VARIANTS */
+
+/* CANDY GREEN */
+.theme-light .admin-menu {
+  color: #fff;
+}
+
+.theme-candy-green .admin-menu {
+  color: #003300;
+}
+
+.theme-candy-green .admin-menu.active {
+  background: linear-gradient(135deg, #1a4d2e, #2ecc71);
+  border-color: rgba(46, 204, 113, 0.4);
+  color: #fff;
+}
+
+/* LIGHT GREEN */
+.theme-candy-lightgreen .admin-menu {
+  color: #003300;
+}
+
+.theme-candy-lightgreen .admin-menu.active {
+  background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+  border-color: rgba(0, 51, 0, 0.2);
+  color: #003300;
+}
+
+/* CANDY BLUE */
+.theme-candy-blue .admin-menu {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.theme-candy-blue .admin-menu.active {
+  background: linear-gradient(135deg, #2193b0, #6dd5ed);
+  border-color: rgba(33, 147, 176, 0.3);
+  color: #fff;
+}
+
+/* BLEND */
+.theme-candy-blend .admin-menu {
+  color: #003300;
+}
+
+.theme-candy-blend .admin-menu.active {
+  background: linear-gradient(135deg, #2ecc71, #a8e6cf, #2193b0);
+  color: #fff;
+  border-color: rgba(46, 204, 113, 0.4);
+}

@@ -9,11 +9,12 @@ import { Link } from "react-router-dom";
 const TalentSolutions = () => {
     const solutionItems = [
         "HR",
-        "Payroll",
-        "Compliance",
-        "Performance Analytics",
+        "Benefits and Payroll",
+        "Compliance and Data Security",
+        "No Upfront fees",
         "On-Ground Support",
-        "Employee Well-Being",
+        "Top Tier Talent",
+        "Employee Well Being Stucture ",
         "Cost Savings"
     ];
 
@@ -38,12 +39,11 @@ const TalentSolutions = () => {
 
                 <div className="solutions-content">
                     {rows.map((row, rowIndex) => (
-                        <div 
-                            key={rowIndex} 
-                            className={`solution-row ${
-                                row.length === 1 ? 'single-item' : 
-                                row.length === 2 ? 'double-items' : ''
-                            }`}
+                        <div
+                            key={rowIndex}
+                            className={`solution-row ${row.length === 1 ? 'single-item' :
+                                    row.length === 2 ? 'double-items' : ''
+                                }`}
                         >
                             {row.map((item, index) => (
                                 <div key={index} className="solution-item">

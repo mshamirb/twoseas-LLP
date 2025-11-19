@@ -160,6 +160,7 @@
   align-items: center;
   justify-content: center;
   width: 38px;
+  min-width: 38px;  
   height: 38px;
   background: linear-gradient(135deg, #0099b9 0%, #007a96 100%);
   color: white;
@@ -167,6 +168,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   box-shadow: 0 4px 8px rgba(0, 153, 185, 0.3);
+  text-align: center;
 }
 
 .solution-text {
@@ -266,6 +268,7 @@
   .all-in-one-badge {
     font-size: 1.2rem;
     padding: 0.6rem 2rem;
+    margin-top: 6rem;
   }
   
   .solution-row {

@@ -32,14 +32,12 @@ export const niches = [
   { id: 1, name: 'Sales' },
   { id: 2, name: 'Marketing' },
   { id: 3, name: 'Virtual Professionals' },
-  { id: 4, name: 'Information Technology' },
-  { id: 5, name: 'Telecommunications' },
-  { id: 6, name: 'Call Center' },
-  { id: 7, name: 'Tax & Accounting' },
-  { id: 8, name: 'Insurance' },
-  { id: 9, name: 'Medical' },
-  { id: 10, name: 'Dental' },
-  { id: 11, name: 'Legal VA' }
+  { id: 4, name: 'Call Center' },
+  { id: 5, name: 'Tax & Accounting' },
+  { id: 6, name: 'Insurance' },
+  { id: 7, name: 'Medical' },
+  { id: 8, name: 'Dental' },
+  { id: 9, name: 'VA' }
 ];
 
 export const companies = [

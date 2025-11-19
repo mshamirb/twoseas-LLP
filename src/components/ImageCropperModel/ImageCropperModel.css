@@ -1,0 +1,70 @@
+/* Dark background overlay */
+.cropper-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  /* Make sure it's above everything */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Cropper box */
+.cropper-content {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10000;
+  /* above overlay */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cropper itself */
+.cropper-content .reactEasyCrop_CropArea {
+  border-radius: 12px;
+}
+
+/* Zoom slider + buttons container */
+.controls {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  z-index: 10001;
+  /* keep controls clickable */
+}
+
+/* Buttons styling */
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons button {
+  background: #2a2d7c;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.buttons button:hover {
+  background: #1f226b;
+}

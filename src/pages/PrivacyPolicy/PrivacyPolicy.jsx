@@ -15,10 +15,10 @@ const PrivacyPolicy = () => {
           `}
         </style>
       </Helmet>
-      
+
       <div className="container">
         <h1 className="policy-title">Privacy Policy</h1>
-        
+
         <h2>Introduction</h2>
         <p>
           Two Seas (referred to as "the Company", "We", "Us", or "Our") is committed to safeguarding the privacy and personal data of our clients, candidates, and website users ("You"). This Privacy Policy explains how we collect, use, and share your information when you interact with our advertisements or utilize our services. It also outlines your privacy rights and the protections available under applicable laws.
@@ -69,7 +69,7 @@ const PrivacyPolicy = () => {
 
         <h2>Tracking Tools & Marketing Automation</h2>
         <p>
-          When using platforms like HubSpot or Pardot for lead nurturing or communication, we fully comply with their privacy standards. These tools help us capture and manage data responsibly, ensuring security and clarity throughout the process.
+          When using platforms like HubSpot for lead nurturing or communication, we fully comply with their privacy standards. These tools help us capture and manage data responsibly, ensuring security and clarity throughout the process.
         </p>
 
         <h2>International Data Transfers</h2>
@@ -96,7 +96,7 @@ const PrivacyPolicy = () => {
         <p>
           If you have any questions about this Privacy Policy or how we manage your personal data, please contact us at:
         </p>
-        <p className="contact-email">📧 <a href="mailto:itdepartment@twoseas.us">itdepartment@twoseas.us</a></p>
+        <p className="contact-email">📧 <a href="mailto:itdepartment@twoseas.us">it@twoseas.org</a></p>
       </div>
 
       <style jsx>{`

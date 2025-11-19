@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaFileUpload, FaLinkedin, FaCheck, FaTimes, FaVideo, FaCamera, FaMicrophone, FaUpload, FaStop, FaPlay, FaPause, FaDownload } from 'react-icons/fa';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { FiCamera } from 'react-icons/fi';
 
 const VideoRecorderOverlay = ({ onComplete, onClose }) => {
   const [countdown, setCountdown] = useState(null);
@@ -556,7 +557,10 @@ const ApplicationForm = ({ jobTitle, onClose }) => {
     photo: null,
     coverLetter: '',
     resume: null,
-    videoSource: 'upload'
+    videoSource: 'upload',
+    currentSalary: '', // ✅ empty string instead of 0
+    expectedSalary: '', // ✅ empty string instead of 0
+    salarySlip: null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -574,6 +578,13 @@ const ApplicationForm = ({ jobTitle, onClose }) => {
       [name]: files ? files[0] : value
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, salarySlip: file, salarySlipName: file.name, });
+    }
   };
 
   const handleVideoSourceChange = (source) => {
@@ -655,26 +666,93 @@ const ApplicationForm = ({ jobTitle, onClose }) => {
     return isValid;
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!validateForm()) {
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     // Simulate API call
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
+  //     setIsSuccess(true);
+  //   } catch (error) {
+  //     console.error('Error submitting form:', error);
+  //     alert('There was an error submitting your application. Please try again.');
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
+  if (!validateForm()) return;
+
+  setIsSubmitting(true);
+
+  try {
+    const formDataToSend = new FormData();
+
+    // 🔵 TEXT FIELDS
+    formDataToSend.append("name", formData.name);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("phone", formData.phone);
+    formDataToSend.append("linkedin", formData.linkedin);
+    formDataToSend.append("coverLetter", formData.coverLetter);
+    formDataToSend.append("currentSalary", formData.currentSalary);
+    formDataToSend.append("expectedSalary", formData.expectedSalary);
+
+    // 🔵 FILES
+    // Video (Either file OR recorded blob)
+    if (formData.video) {
+      formDataToSend.append("video", formData.video);
+    } else if (formData.videoBlob) {
+      formDataToSend.append(
+        "video",
+        formData.videoBlob,
+        "recorded-video.mp4"
+      );
     }
 
-    setIsSubmitting(true);
+    // Photo
+    if (formData.photo) {
+      formDataToSend.append("photo", formData.photo);
+    }
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    // Resume
+    if (formData.resume) {
+      formDataToSend.append("resume", formData.resume);
+    }
+
+    // Salary Slip (Optional)
+    if (formData.salarySlip) {
+      formDataToSend.append("salarySlip", formData.salarySlip);
+    }
+
+    // 🔵 SEND REQUEST
+    const response = await fetch("https://twoseas.org/sendMail.php", {
+      method: "POST",
+      body: formDataToSend,
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
       setIsSuccess(true);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('There was an error submitting your application. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      alert("Error sending application.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong.");
+  }
+
+  setIsSubmitting(false);
+};
 
   const colors = {
     primary: '#2A2D7C',
@@ -944,6 +1022,32 @@ const ApplicationForm = ({ jobTitle, onClose }) => {
                 ></textarea>
                 <div className="char-count">{formData.coverLetter.length}/1000</div>
               </div>
+              <div className="salary-section">
+                {/* Current Salary Field */}
+                <div className="form-group floating-label salary-input">
+                  <input
+                    type="text"
+                    id="currentSalary"
+                    name="currentSalary"
+                    value={formData.currentSalary}
+                    onChange={handleChange}
+                    placeholder="CURRENT SALARY"
+                  />
+                </div>
+
+                {/* Expected Salary + Salary Slip Upload */}
+                <div className="form-group floating-label salary-input">
+                  <input
+                    type="text"
+                    id="expectedSalary"
+                    name="expectedSalary"
+                    value={formData.expectedSalary}
+                    onChange={handleChange}
+                    placeholder="EXPECTED SALARY"
+                  />
+                </div>
+              </div>
+
 
               {showCamera && (
                 <VideoRecorderOverlay
@@ -1497,6 +1601,14 @@ const ApplicationForm = ({ jobTitle, onClose }) => {
         .has-error .upload-icon {
           color: ${colors.error} !important;
         }
+.salary-section {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+  .salary-input{
+    flex: 1;
+    }
 
         /* Responsive */
         @media (max-width: 768px) {

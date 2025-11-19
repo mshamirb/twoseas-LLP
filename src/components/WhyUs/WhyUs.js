@@ -30,7 +30,7 @@ const WhyUs = () => {
                 {/* Cards Row */}
                 <div className="benefits-grid">
                     <div className="benefit-card">
-                        <h3>Ready to Select From Talent Pool</h3>
+                        <h3>Interviewed Talent Pool</h3>
                         <p>Pre-Screened, Rigorously vetted, reference checked talent pool. Employees deployable in days.</p>
                     </div>
 
@@ -40,14 +40,14 @@ const WhyUs = () => {
                     </div>
 
                     <div className="benefit-card">
-                        <h3>Help in Scaling and Expanding</h3>
+                        <h3>Larger Scale Expansion</h3>
                         <p>We help our clients expand their team over time finding the right talent gradually to ensure corporate level expansion.</p>
-                        <p className="card-detail">Performance metrics such as KPI's are constantly measured and delivered to our clients by our dedicated account managers.</p>
+                        <p className="card-detail">Performance metrics such as KPI’s are constantly measured and carried through to our clients.</p>
                     </div>
 
                     <div className="benefit-card">
                         <h3>Your HR Partner</h3>
-                        <p>Compliance, management, support and payroll are all done by us so you can focus on what matters.</p>
+                        <p>Benefits, support, payroll and compliance are all taken care of by us so you can focus on the core tasks.</p>
                         <p className="business-model">End-to-end HR solutions</p>
                     </div>
                 </div>

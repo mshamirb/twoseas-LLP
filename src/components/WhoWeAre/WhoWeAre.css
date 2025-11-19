@@ -95,3 +95,8 @@
         align-items: center;
     }
 }
+@media (max-width: 768px) {
+    .who-we-are {
+        padding: 1.5rem 0;
+    }
+}

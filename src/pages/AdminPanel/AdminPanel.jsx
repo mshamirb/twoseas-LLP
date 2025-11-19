@@ -19,6 +19,7 @@ import {
 } from "react-icons/fi"
 import Logo from "../../assets/Two Seas Logo.png"
 import { FiLogOut } from "react-icons/fi";
+import { BsBell } from "react-icons/bs";
 import { db } from "../../firebase";
 import AddEmployee from '../AddEmployee/AddEmployee';
 import EmployeeCard from '../EmployeeCard/EmployeeCard';
@@ -35,15 +36,19 @@ import {
   setDoc,
   query,
   where,
-  orderBy
+  orderBy,
+  onSnapshot
 } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import "../ClientDashboard/ClientDashboard.css";
 
 // Add these imports at the top with other imports
 import { FiChevronLeft, FiChevronRight, FiChevronDown, FiSearch } from "react-icons/fi";
 
 import { FiCopy, FiRefreshCw } from "react-icons/fi";
 import ViewMember from "./pages/ViewMember";
+import { useTheme } from "../../context/ThemeContext";
+import { navItems } from "../AdminDashboard/constants";
 
 const GeneratePasswordComponent = memo(({ email, onPasswordGenerated }) => {
   const [password, setPassword] = useState("");
@@ -926,6 +931,16 @@ const ClientCard = memo(({ client, onClick, onEdit, onDelete }) => {
 
 // Client Details Modal
 const ClientDetailsModal = memo(({ client, isOpen, onClose }) => {
+  const [allClients, setAllClients] = useState([]);
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  useEffect(() => {
+    const loadData = async () => {
+      const { employees } = await fetchClientsAndUsers();
+      setAllClients(employees);
+    };
+    loadData();
+  }, []);
   if (!isOpen || !client) return null;
 
   const handleOverlayClick = (e) => {
@@ -996,170 +1011,173 @@ const ClientDetailsModal = memo(({ client, isOpen, onClose }) => {
         </div>
 
         <div style={{ padding: "32px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "32px" }}>
-            {client.companyLogo ? (
-              <img
-                src={client.companyLogo}
-                alt={client.name}
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "16px",
-                  objectFit: "cover",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "16px",
-                  background: "linear-gradient(135deg, #22A2D7 0%, #06a3c2 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  fontSize: "32px",
-                  fontWeight: "bold",
-                }}
-              >
-                {client.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <h3 style={{ margin: 0, fontSize: "28px", fontWeight: "700", color: "#22A2D7" }}>
-                {client.name}
-              </h3>
-              <span
-                style={{
-                  padding: "6px 16px",
-                  borderRadius: "20px",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  backgroundColor: client.status === "Active" ? "#f0fdf4" : "#fef2f2",
-                  color: client.status === "Active" ? "#10b981" : "#ef4444",
-                }}
-              >
-                {client.status}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
-            {/* Company Information */}
-            <div>
-              <h4 style={{
-                margin: "0 0 16px 0",
-                color: "#22A2D7",
-                fontSize: "18px",
-                borderBottom: "2px solid #22A2D7",
-                paddingBottom: "8px"
-              }}>
-                Company Information
-              </h4>
-              <div style={{ display: "grid", gap: "16px" }}>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.email || "Not provided"}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", flexWrap: "wrap", gap: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "32px" }}>
+              {client.companyLogo ? (
+                <img
+                  src={client.companyLogo}
+                  alt={client.name}
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "16px",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "16px",
+                    background: "linear-gradient(135deg, #22A2D7 0%, #06a3c2 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                    fontSize: "32px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {client.name.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.phone || "Not provided"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Primary Contact */}
-            <div>
-              <h4 style={{
-                margin: "0 0 16px 0",
-                color: "#22A2D7",
-                fontSize: "18px",
-                borderBottom: "2px solid #22A2D7",
-                paddingBottom: "8px"
-              }}>
-                Primary Contact
-              </h4>
-              <div style={{ display: "grid", gap: "16px" }}>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Name:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1 || "Not provided"}</span>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1Email}</span>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1Phone || "Not provided"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Secondary Contact */}
-            {client.contactPerson2 && (
+              )}
               <div>
-                <h4 style={{
-                  margin: "0 0 16px 0",
-                  color: "#22A2D7",
-                  fontSize: "18px",
-                  borderBottom: "2px solid #22A2D7",
-                  paddingBottom: "8px"
-                }}>
-                  Secondary Contact
-                </h4>
-                <div style={{ display: "grid", gap: "16px" }}>
-                  <div>
-                    <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Name:</span>
-                    <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2}</span>
-                  </div>
-                  {client.contactPerson2Email && (
-                    <div>
-                      <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
-                      <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2Email}</span>
-                    </div>
-                  )}
-                  {client.contactPerson2Phone && (
-                    <div>
-                      <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
-                      <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2Phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Additional Information */}
-            <div>
-              <h4 style={{
-                margin: "0 0 16px 0",
-                color: "#22A2D7",
-                fontSize: "18px",
-                borderBottom: "2px solid #22A2D7",
-                paddingBottom: "8px"
-              }}>
-                Additional Information
-              </h4>
-              <div style={{ display: "grid", gap: "16px" }}>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Created:</span>
-                  <span style={{ color: "#374151", fontWeight: "500" }}>
-                    {client.createdAt?.toDate().toLocaleDateString()}
-                  </span>
-                </div>
-                {client.updatedAt && (
-                  <div>
-                    <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Last Updated:</span>
-                    <span style={{ color: "#374151", fontWeight: "500" }}>
-                      {client.updatedAt?.toDate().toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
+                <h3 style={{ margin: 0, fontSize: "28px", fontWeight: "700", color: "#22A2D7" }}>
+                  {client.name}
+                </h3>
+                <span
+                  style={{
+                    padding: "6px 16px",
+                    borderRadius: "20px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    backgroundColor: client.status === "Active" ? "#f0fdf4" : "#fef2f2",
+                    color: client.status === "Active" ? "#10b981" : "#ef4444",
+                  }}
+                >
+                  {client.status}
+                </span>
               </div>
             </div>
           </div>
         </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", paddingRight: "32px", paddingLeft: "32px", paddingBottom: "32px" }}>
+          {/* Company Information */}
+          <div>
+            <h4 style={{
+              margin: "0 0 16px 0",
+              color: "#22A2D7",
+              fontSize: "18px",
+              borderBottom: "2px solid #22A2D7",
+              paddingBottom: "8px"
+            }}>
+              Company Information
+            </h4>
+            <div style={{ display: "grid", gap: "16px" }}>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>{client.email || "Not provided"}</span>
+              </div>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>{client.phone || "Not provided"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Contact */}
+          <div>
+            <h4 style={{
+              margin: "0 0 16px 0",
+              color: "#22A2D7",
+              fontSize: "18px",
+              borderBottom: "2px solid #22A2D7",
+              paddingBottom: "8px"
+            }}>
+              Primary Contact
+            </h4>
+            <div style={{ display: "grid", gap: "16px" }}>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Name:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1 || "Not provided"}</span>
+              </div>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1Email}</span>
+              </div>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson1Phone || "Not provided"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Secondary Contact */}
+          {client.contactPerson2 && (
+            <div>
+              <h4 style={{
+                margin: "0 0 16px 0",
+                color: "#22A2D7",
+                fontSize: "18px",
+                borderBottom: "2px solid #22A2D7",
+                paddingBottom: "8px"
+              }}>
+                Secondary Contact
+              </h4>
+              <div style={{ display: "grid", gap: "16px" }}>
+                <div>
+                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Name:</span>
+                  <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2}</span>
+                </div>
+                {client.contactPerson2Email && (
+                  <div>
+                    <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Email:</span>
+                    <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2Email}</span>
+                  </div>
+                )}
+                {client.contactPerson2Phone && (
+                  <div>
+                    <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Phone:</span>
+                    <span style={{ color: "#374151", fontWeight: "500" }}>{client.contactPerson2Phone}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Additional Information */}
+          <div>
+            <h4 style={{
+              margin: "0 0 16px 0",
+              color: "#22A2D7",
+              fontSize: "18px",
+              borderBottom: "2px solid #22A2D7",
+              paddingBottom: "8px"
+            }}>
+              Additional Information
+            </h4>
+            <div style={{ display: "grid", gap: "16px" }}>
+              <div>
+                <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Created:</span>
+                <span style={{ color: "#374151", fontWeight: "500" }}>
+                  {client.createdAt?.toDate().toLocaleDateString()}
+                </span>
+              </div>
+              {client.updatedAt && (
+                <div>
+                  <span style={{ color: "#64748b", fontSize: "14px", display: "block", marginBottom: "4px" }}>Last Updated:</span>
+                  <span style={{ color: "#374151", fontWeight: "500" }}>
+                    {client.updatedAt?.toDate().toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
     </div>
   );
 });
@@ -1390,10 +1408,61 @@ const ViewClients = memo(() => {
 const EditClientModal = memo(({ client, isOpen, onClose, onUpdate }) => {
   const [editedClient, setEditedClient] = useState(client || {});
   const [logoFile, setLogoFile] = useState(null);
+  const [allClients, setAllClients] = useState([]);
+  const [selectedClients, setSelectedClients] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const dropdownRef = useRef(null);
+  // 🟢 Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const ref = collection(db, "employees");
+      const snapshot = await getDocs(ref);
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setEmployees(data);
+    };
+
+    fetchEmployees();
+  }, []);
+  const fetchClientsAndUsers = async () => {
+    const clientsSnapshot = await getDocs(collection(db, "clients"));
+    const employeesSnapshot = await getDocs(collection(db, "employees"));
+
+    const clients = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const employees = employeesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    return { clients, employees };
+  };
+  useEffect(() => {
+    const loadData = async () => {
+      const { employees } = await fetchClientsAndUsers();
+      setAllClients(employees);
+    };
+    loadData();
+  }, []);
+
+  const sortedAndFilteredEmployees = allClients
+    .filter((emp) => emp.name?.toLowerCase().includes(searchTerm))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   useEffect(() => {
     if (client) {
       setEditedClient(client);
+      setSelectedEmployees(client.visibleToEmployees || []);
     }
   }, [client]);
 
@@ -1419,8 +1488,29 @@ const EditClientModal = memo(({ client, isOpen, onClose, onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    onUpdate(editedClient);
+    // onUpdate(editedClient);
+    const updatedClient = {
+      ...editedClient,
+      visibleToEmployees: selectedEmployees,
+      recommendedEmployees: selectedClients.map((emp) => ({
+        id: emp.id,
+        name: emp.name,
+        experience: emp.experience || "",
+        email: emp.email || "",
+        expertise: emp.expertise || "",
+        imageBase64: emp.imageBase64 || "",
+      })),
+    };
+
+    onUpdate(updatedClient);
   };
+
+  useEffect(() => {
+    if (client) {
+      setEditedClient(client);
+      setSelectedClients(client.recommendedEmployees || []);
+    }
+  }, [client]);
 
   if (!isOpen) return null;
 
@@ -1952,9 +2042,195 @@ const EditClientModal = memo(({ client, isOpen, onClose, onUpdate }) => {
               </div>
             </div>
           </div>
+          {/* Recommended Employees */}
+          <div style={{ position: "relative", width: "100%", maxWidth: "350px" }} ref={dropdownRef}>
+            <label
+              style={{
+                display: "block",
+                fontWeight: "600",
+                color: "#374151",
+                marginBottom: "8px",
+              }}
+            >
+              Recommended Employees
+            </label>
+
+            {/* Dropdown field */}
+            <div
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                padding: "8px 12px",
+                cursor: "pointer",
+                backgroundColor: "white",
+                width: "100%",
+              }}
+            >
+              Select employees...
+            </div>
+
+            {/* Dropdown menu */}
+            {dropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  backgroundColor: "white",
+                  border: "1px solid #ccc",
+                  borderRadius: "8px",
+                  maxHeight: "250px",
+                  overflowY: "auto",
+                  marginTop: "4px",
+                  zIndex: 1000,
+                  width: "100%",
+                }}
+              >
+                {/* Search Input */}
+                <div style={{ padding: "8px 10px", borderBottom: "1px solid #e5e7eb" }}>
+                  <input
+                    type="text"
+                    placeholder="Search employees..."
+                    onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      outline: "none",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#06a3c2")}
+                    onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+                  />
+                </div>
+
+                {/* Filtered & Alphabetically Sorted Employees */}
+                {sortedAndFilteredEmployees.length === 0 ? (
+                  <p style={{ padding: "8px 12px", color: "#666" }}>No employees found</p>
+                ) : (
+                  sortedAndFilteredEmployees.map((emp) => (
+                    <label
+                      key={emp.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "6px 10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedClients.some((c) => c.id === emp.id)}
+                        onChange={() => {
+                          if (selectedClients.some((c) => c.id === emp.id)) {
+                            setSelectedClients(selectedClients.filter((c) => c.id !== emp.id));
+                          } else {
+                            setSelectedClients([...selectedClients, emp]);
+                          }
+                        }}
+                        style={{ marginRight: "8px" }}
+                      />
+                      {emp.name}
+                    </label>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Selected clients as tags */}
+            {selectedClients.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  marginTop: "10px",
+                }}
+              >
+                {selectedClients.map((client) => (
+                  <span
+                    key={client.id}
+                    style={{
+                      background: "#22A2D7",
+                      color: "white",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "13px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {client.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Visible to Employees Section
+<div style={{ marginBottom: "20px", marginTop: "16px" }}>
+  <label
+    style={{
+      display: "block",
+      fontSize: "14px",
+      fontWeight: "600",
+      color: "#374151",
+      marginBottom: "8px",
+    }}
+  >
+    Employees Visibility
+  </label>
+
+  <div
+    style={{
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+      padding: "10px",
+      maxHeight: "200px",
+      overflowY: "auto",
+      backgroundColor: "#fafafa",
+    }}
+  >
+    {employees.length === 0 ? (
+      <p style={{ fontSize: "13px", color: "#777" }}>Loading employees...</p>
+    ) : (
+      employees.map((emp) => (
+        <label
+          key={emp.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "6px",
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={selectedEmployees.includes(emp.id)}
+            onChange={(e) => {
+              setSelectedEmployees((prev) =>
+                e.target.checked
+                  ? [...prev, emp.id]
+                  : prev.filter((id) => id !== emp.id)
+              );
+            }}
+            style={{
+              width: "16px",
+              height: "16px",
+              accentColor: "#2a2d7c",
+            }}
+          />
+          <span>{emp.fullName || emp.name || "Unnamed Employee"}</span>
+        </label>
+      ))
+    )}
+  </div>
+</div> */}
 
           {/* Status */}
-          <div style={{ marginBottom: "20px" }}>
+          <div style={{ marginBottom: "20px", marginTop: "16px" }}>
             <label
               style={{
                 display: "block",
@@ -2209,7 +2485,7 @@ const AddClientModal = memo(({
               margin: 0,
             }}
           >
-            Add New Client
+            Add New Clients
           </h2>
           <button
             onClick={() => setShowAddClientModal(false)}
@@ -2780,6 +3056,26 @@ export default function ModernAdminPanel() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const { theme, changeTheme } = useTheme();
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeOptions = [
+    { value: "light", label: "Light", icon: "☀️" },
+    // { value: "dark", label: "Dark", icon: "🌙" },
+    { value: "candy-green", label: "Candy Green", icon: "🍃" },
+    { value: "candy-lightgreen", label: "Candy Light Green", icon: "🌿" },
+    { value: "candy-blue", label: "Candy Blue", icon: "💧" },
+    { value: "candy-blend", label: "Candy Blend", icon: "🌈" }
+  ];
+
+  const getCurrentThemeLabel = () => {
+    const currentTheme = themeOptions.find(option => option.value === theme);
+    return currentTheme ? `${currentTheme.icon} ${currentTheme.label}` : "Select Theme";
+  };
+
+  const handleThemeChange = (themeValue) => {
+    changeTheme(themeValue);
+    setIsThemeDropdownOpen(false);
+  };
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
@@ -2883,6 +3179,10 @@ export default function ModernAdminPanel() {
       companyLogo: null,
     })
     setShowAddClientModal(false)
+  }
+  const handleLogout = () => {
+    localStorage.removeItem("adminUser");
+    navigate("/admin-login");
   }
 
   // Render different content based on active menu item
@@ -3352,51 +3652,100 @@ export default function ModernAdminPanel() {
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-      fetchScheduledInterviews();
-    }, []);
+      const interviewsRef = collection(db, "scheduledInterviews");
+      const q = query(interviewsRef, orderBy("createdAt", "desc"));
 
-    const fetchScheduledInterviews = async () => {
-      try {
-        const interviewsRef = collection(db, "scheduledInterviews");
-        const q = query(interviewsRef, orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const interviewsData = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          interviewsData.push({
-            id: doc.id,
-            ...data,
-            // Convert Firestore timestamp to Date object
-            createdAt: data.createdAt?.toDate?.() || new Date()
+      // ✅ Real-time listener
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const interviewsData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate?.() || new Date(),
+            };
           });
-        });
+          setInterviews(interviewsData);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching interviews:", error);
+          alert("Error loading scheduled interviews");
+          setLoading(false);
+        }
+      );
 
-        setInterviews(interviewsData);
+      // Cleanup on unmount
+      return () => unsubscribe();
+    }, []);
+    const handleStatusChange = async (interviewId, newStatus, interviewData) => {
+      try {
+        const interviewRef = doc(db, "scheduledInterviews", interviewId);
+
+        if (newStatus === "cancelled") {
+          // Confirm before deleting
+          const confirmDelete = window.confirm(
+            "Are you sure you want to cancel this interview? This will delete the schedule."
+          );
+          if (!confirmDelete) return;
+
+          await deleteDoc(interviewRef);
+
+          // Remove from UI
+          setInterviews((prev) => prev.filter((item) => item.id !== interviewId));
+
+          alert("Interview cancelled and deleted successfully.");
+          return;
+        }
+
+        // Otherwise, just update status
+        await updateDoc(interviewRef, { status: newStatus });
+
+        // Update UI immediately without refresh
+        setInterviews((prev) =>
+          prev.map((item) =>
+            item.id === interviewId ? { ...item, status: newStatus } : item
+          )
+        );
       } catch (error) {
-        console.error("Error fetching interviews:", error);
-        alert("Error loading scheduled interviews");
-      } finally {
-        setLoading(false);
+        console.error("Error updating status:", error);
+        alert("Failed to update status.");
       }
     };
+
 
     const formatDateTime = (date, time, timezone) => {
       if (!date || !time) return "Not set";
 
       // Format date
       const dateObj = new Date(date);
-      const formattedDate = dateObj.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+      const formattedDate = dateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
       });
 
-      // Format time (remove seconds if present)
-      const formattedTime = time.includes(':') ? time.split(':').slice(0, 2).join(':') : time;
+      // Format time with AM/PM
+      let formattedTime = time;
+      try {
+        const [hours, minutes] = time.split(":").map(Number);
+        const dateTime = new Date();
+        dateTime.setHours(hours);
+        dateTime.setMinutes(minutes || 0);
+        formattedTime = dateTime.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } catch {
+        formattedTime = time;
+      }
 
-      // Get timezone abbreviation
-      const timezoneAbbr = timezone?.split('/')?.pop()?.replace('_', ' ') || timezone;
+      // Timezone abbreviation
+      const timezoneAbbr =
+        timezone?.split("/")?.pop()?.replace("_", " ") || timezone;
 
       return `${formattedDate} ${formattedTime} (${timezoneAbbr})`;
     };
@@ -3428,7 +3777,7 @@ export default function ModernAdminPanel() {
             Scheduled Interviews ({filteredInterviews.length})
           </h2>
           <button
-            onClick={fetchScheduledInterviews}
+            // onClick={fetchScheduledInterviews}
             style={{
               padding: "10px 16px",
               backgroundColor: "#06a3c2",
@@ -3519,6 +3868,9 @@ export default function ModernAdminPanel() {
                     <th style={{ padding: "16px", fontWeight: "600", borderBottom: "1px solid #e5e7eb" }}>
                       Secondary Date & Time
                     </th>
+                    <th style={{ padding: "16px", fontWeight: "600", borderBottom: "1px solid #e5e7eb" }}>
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3565,6 +3917,47 @@ export default function ModernAdminPanel() {
                           <span style={{ color: "#9ca3af", fontStyle: "italic" }}>Not provided</span>
                         }
                       </td>
+                      <td
+                        style={{
+                          padding: "16px",
+                          fontSize: "14px",
+                          color: "#374151",
+                          position: "relative",
+                        }}
+                      >
+                        <select
+                          value={interview.status || "In Process"}
+                          onChange={(e) => handleStatusChange(interview.id, e.target.value, interview)}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #d1d5db",
+                            backgroundColor:
+                              interview.status === "confirmed"
+                                ? "#dcfce7" // light green
+                                : interview.status === "cancelled"
+                                  ? "#fee2e2" // light red for cancelled
+                                  : "#fef9c3", // yellow for In Process
+                            color:
+                              interview.status === "confirmed"
+                                ? "#166534"
+                                : interview.status === "cancelled"
+                                  ? "#991b1b"
+                                  : "#854d0e",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            outline: "none",
+                            textTransform: "capitalize",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <option value="In Process">In Process</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </td>
+
+
                     </tr>
                   ))}
                 </tbody>
@@ -3599,6 +3992,32 @@ export default function ModernAdminPanel() {
     setActiveMenuItem("dashboard");
   };
 
+  const [interviews, setInterviews] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+
+  useEffect(() => {
+    const interviewsRef = collection(db, "scheduledInterviews");
+    const q = query(interviewsRef, where("status", "==", "In Process"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
+        }))
+        .filter((item) => item.status === "In Process"); // extra safety filter
+
+      console.log("✅ Filtered (scheduled only):", data);
+      setInterviews(data);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+
+  console.log("In-Process Interviews:", interviews);
 
   return (
     <div
@@ -3660,17 +4079,19 @@ export default function ModernAdminPanel() {
           transition: "left 0.3s ease",
           overflowY: "auto",
         }}
+        className={`theme-${theme}`}
       >
         <div
           style={{
             padding: "32px 24px",
             borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
             display: "flex",
+            flexDirection: "column",
             justifyContent: "center", // centers horizontally
             alignItems: "center", // centers vertically (if container has height)
           }}
         >
-          <a href="/" style={{ display: "inline-block" }}>
+          <Link to="/admin-dashboard" style={{ display: "inline-block" }}>
             <img
               src={Logo}
               alt="Two Seas Logo"
@@ -3681,10 +4102,133 @@ export default function ModernAdminPanel() {
                 cursor: "pointer",
               }}
             />
-          </a>
+          </Link>
+
+          <div
+            style={{ position: "relative", cursor: "pointer", marginTop: "-26px", alignSelf: "flex-end" }}
+            onClick={() => setDropdownOpen((prev) => !prev)}
+          >
+            <BsBell size={22} style={{ color: "white" }} />
+            {/* Optional red dot for new notifications */}
+            {interviews.length > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-8px",
+                  right: "-8px",
+                  background: "red",
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "18px",
+                  height: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "11px",
+                  fontWeight: "bold",
+                }}
+              >
+                {interviews.length > 9 ? "9+" : interviews.length}
+              </span>
+            )}
+          </div>
+
+          {/* 🔽 Notification Dropdown */}
+          {dropdownOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "150px",
+                left: "20px",
+                width: "230px",
+                maxHeight: "400px",
+                overflowY: "auto",
+                backgroundColor: "white",
+                border: "1px solid #e5e7eb",
+                borderRadius: "12px",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                zIndex: 2000,
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderBottom: "1px solid #e5e7eb",
+                  fontWeight: "600",
+                  color: "#374151",
+                }}
+              >
+                Notifications ({interviews.length})
+              </div>
+
+
+              {interviews.length === 0 ? (
+                <div style={{ padding: "16px", textAlign: "center", color: "#9ca3af" }}>
+                  No new notifications
+                </div>
+              ) : (
+                interviews.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: "12px 16px",
+                      borderBottom: "1px solid #f1f5f9",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#f9fafb")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "white")}
+                  >
+                    <div style={{ fontWeight: "600", color: "#111827" }}>
+                      {item.clientName || "Client"}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#6b7280" }}>
+                      Interview with {item.employeeName}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#9ca3af",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {new Date(item.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         <nav style={{ padding: "24px 0" }}>
+          {/* Theme Controls */}
+          <div className="theme-controls " style={{ paddingLeft: "20px", marginBottom: "16px" }}>
+            <div className="theme-dropdown">
+              <button
+                className="theme-dropdown-toggle"
+                onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+              >
+                <span>{getCurrentThemeLabel()}</span>
+                <FiChevronDown size={16} />
+              </button>
+
+              {isThemeDropdownOpen && (
+                <div className="theme-dropdown-menu">
+                  {themeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      className={`theme-dropdown-item ${theme === option.value ? 'active' : ''}`}
+                      onClick={() => handleThemeChange(option.value)}
+                    >
+                      <span className="theme-icon">{option.icon}</span>
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {menuItems.map((item) => (
               <li key={item.id} style={{ margin: "0 16px 8px 16px" }}>
@@ -3713,34 +4257,33 @@ export default function ModernAdminPanel() {
                       setShowAddClientModal(true)
                     }
                   }}
+                  className={`admin-menu ${activeMenuItem === item.id ? 'active' : ''}`}
                   style={{
                     width: "100%",
                     display: "flex",
                     alignItems: "center",
                     gap: "12px",
                     padding: "14px 16px",
-                    backgroundColor: activeMenuItem === item.id ? "#06a3c2" : "transparent",
-                    border: activeMenuItem === item.id ? "1px solid rgba(6, 163, 194, 0.3)" : "1px solid transparent",
                     borderRadius: "12px",
-                    color: activeMenuItem === item.id ? "#ffffffff" : "rgba(255, 255, 255, 0.8)",
+                    border: "none",
                     fontSize: "14px",
                     fontWeight: "500",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     textAlign: "left",
                   }}
-                  onMouseOver={(e) => {
-                    if (activeMenuItem !== item.id) {
-                      e.target.style.backgroundColor = "rgba(255, 255, 255, 0.05)"
-                      e.target.style.color = "white"
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (activeMenuItem !== item.id) {
-                      e.target.style.backgroundColor = "transparent"
-                      e.target.style.color = "rgba(255, 255, 255, 0.8)"
-                    }
-                  }}
+                // onMouseOver={(e) => {
+                //   if (activeMenuItem !== item.id) {
+                //     e.target.style.backgroundColor = "rgba(255, 255, 255, 0.05)"
+                //     e.target.style.color = "white"
+                //   }
+                // }}
+                // onMouseOut={(e) => {
+                //   if (activeMenuItem !== item.id) {
+                //     e.target.style.backgroundColor = "transparent"
+                //     e.target.style.color = "rgba(255, 255, 255, 0.8)"
+                //   }
+                // }}
                 >
                   <span>{item.icon}</span>
                   <span>{item.label}</span>
@@ -3768,6 +4311,7 @@ export default function ModernAdminPanel() {
             paddingTop: isDesktop ? "24px" : "72px", // Extra top padding on mobile for menu button
             boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
           }}
+          className={`theme-${theme}`}
         >
           <div
             style={{
@@ -3778,12 +4322,12 @@ export default function ModernAdminPanel() {
               gap: "20px",
             }}
           >
-            <div>
+            <div className=" admin-header">
               <h1
                 style={{
                   fontSize: isDesktop ? "28px" : "24px",
                   fontWeight: "700",
-                  color: "#2A2D7C",
+                  // color: "#2A2D7C",
                   margin: "0 0 8px 0",
                 }}
               >
@@ -3792,7 +4336,6 @@ export default function ModernAdminPanel() {
               <p
                 style={{
                   fontSize: isDesktop ? "16px" : "14px",
-                  color: "#64748b",
                   margin: 0,
                 }}
               >
@@ -3812,22 +4355,24 @@ export default function ModernAdminPanel() {
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  backgroundColor: "#2A2D7C",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  cursor: "pointer",
-                  fontSize: "20px",
-                }}
-              >
-                <FiLogOut />
-              </div>
+              <Link to="/admin-login" onClick={() => handleLogout()}>
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    backgroundColor: "#2A2D7C",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "white",
+                    cursor: "pointer",
+                    fontSize: "20px",
+                  }}
+                >
+                  <FiLogOut />
+                </div>
+              </Link>
             </div>
           </div>
         </header>
@@ -3837,6 +4382,7 @@ export default function ModernAdminPanel() {
           style={{
             padding: isDesktop ? "32px" : "16px",
           }}
+          className={`theme-${theme}`}
         >
           {renderContent()}
         </main>

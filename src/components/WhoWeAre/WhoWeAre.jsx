@@ -23,7 +23,7 @@ const WhoWeAre = () => {
                         on-ground support to ensure offshoring success.
                     </p>
                     <p className="who-we-are-description">
-                        We emphasize transparency and best practices at our end utilizing tools to monitor and motivate our workforce.
+                        We emphasize transparency and best practices at our end by utilizing tools to monitor and motivate our workforce.
                     </p>
                     <Link to="/schedule-appointment" className="who-we-are-button">
                         Book a Demo

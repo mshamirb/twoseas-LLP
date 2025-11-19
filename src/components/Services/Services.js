@@ -4,31 +4,30 @@ import "./Services.css";
 
 const Services = () => {
     const navigate = useNavigate();
-    
+
     const services = [
-        { 
+        {
             id: 'insurance',
-            title: "Insurance", 
+            title: "Insurance",
             icon: "☂️",
             desc: "Expert insurance professionals for all your coverage needs.",
             details: {
                 description: "We provide a wide array of experienced workforce and fresh graduates wanting to work in the niche of Insurance. Our reps are pre-vetted, interviewed, and reference checked through the two seas 5 step method. ",
-                hiringProcess: "Our rigorous process ensures we find insurance experts with the right technical knowledge and customer service skills. Want to know if we have what you're looking for?"
             }
         },
-        { 
+        {
             id: 'sales-marketing',
-            title: "Sales & Marketing", 
+            title: "Sales & Marketing",
             icon: "📈",
             desc: "Revenue-driving professionals for your growth needs.",
             details: {
-                description: "Our sales and marketing team consist of outbound and inbound telemarketers, sales executives, business developers, and account executives. Focusing on both B2B and B2C expertise.",
+                description: "Our sales and marketing team consist of outbound and inbound telemarketers, sales executives and account executives. Focusing on both B2B and B2C expertise.",
                 hiringProcess: "Candidates undergo practical sales simulations and marketing strategy assessments."
             }
         },
-        { 
+        {
             id: 'accounting-finance',
-            title: "Accounting & Finance", 
+            title: "Accounting & Finance",
             icon: "💰",
             desc: "Financial experts to manage your fiscal operations.",
             details: {
@@ -36,9 +35,9 @@ const Services = () => {
                 hiringProcess: ""
             }
         },
-        { 
+        {
             id: 'virtual-professionals',
-            title: "Virtual Professionals", 
+            title: "Virtual Professionals",
             displayTitle: "Virtual",
             icon: "👥",
             desc: "Skilled remote support for your business needs.",
@@ -47,14 +46,23 @@ const Services = () => {
                 // hiringProcess: "Virtual professionals are tested on time management, communication skills, and technical proficiency."
             }
         },
-        { 
+        {
             id: 'it-telecom',
-            title: "IT & Telecom", 
+            title: "IT & Telecom",
             icon: "💻",
             desc: "Technical experts for your digital infrastructure.",
             details: {
                 description: "We provide back end/front-end software engineers, voice engineers, application developers, cyber security specialists as well as technical support professionals to our clients.",
                 // hiringProcess: "IT candidates complete coding challenges and infrastructure troubleshooting scenarios."
+            }
+        },
+        {
+            id: 'managed-services',
+            title: "Managed Services",
+            icon: "🛠️",
+            desc: "Reliable managed service professionals to support your business operations.",
+            details: {
+                description: "We specialize in development of both simple and state of the art websites. Our expertise lay further in visualization and development of web portals, applications and software.",
             }
         }
     ];
@@ -78,19 +86,20 @@ const Services = () => {
 
                 <div className="services-grid">
                     {services.slice(0, 3).map((service, index) => (
-                        <ServiceCard 
+                        <ServiceCard
                             key={service.id}
-                            service={service} 
+                            service={service}
                             onExploreClick={() => handleExploreClick(service)}
                         />
                     ))}
                 </div>
                 <div className="services-grid second-row">
-                    {services.slice(3, 5).map((service, index) => (
-                        <ServiceCard 
+                    {services.slice(3, 6).map((service, index) => (
+                        <ServiceCard
                             key={service.id}
-                            service={service} 
+                            service={service}
                             onExploreClick={() => handleExploreClick(service)}
+                            isSpecial={service.id === 'it-telecom'}
                         />
                     ))}
                 </div>
@@ -99,14 +108,14 @@ const Services = () => {
     );
 };
 
-const ServiceCard = ({ service, onExploreClick }) => (
-    <div className="service-card">
+const ServiceCard = ({ service, onExploreClick, isSpecial }) => (
+    <div className={`service-card ${isSpecial ? "special-card" : ""}`}>
         <div className="card-icon">{service.icon}</div>
         <div className="card-content">
             <h3>{service.title}</h3>
             {/* <p className="card-desc">{service.desc}</p> */}
             <div className="card-hover-content">
-                <button 
+                <button
                     className="card-cta"
                     onClick={onExploreClick}
                 >

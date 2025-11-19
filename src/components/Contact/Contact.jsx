@@ -28,13 +28,49 @@ const Contact = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+
+    //     emailjs.send(
+    //         'service_wjrb0qk',
+    //         'template_4jdr7t9',
+    //         {
+    //             name: formData.name,
+    //             companyName: formData.companyName,
+    //             companyWebsite: formData.companyWebsite,
+    //             niche: formData.niche,
+    //             phone: formData.phone,
+    //             email: formData.email,
+    //             message: formData.message,
+    //             time: new Date().toLocaleString()
+    //         },
+    //         'vkVckeGL1JQx-x4_q'
+    //     )
+    //         .then((result) => {
+    //             console.log('Email sent successfully!', result.text);
+    //             alert('Thank you for your message! We will get back to you shortly.');
+    //             setFormData({
+    //                 name: '',
+    //                 companyName: '',
+    //                 companyWebsite: '',
+    //                 niche: '',
+    //                 phone: '',
+    //                 email: '',
+    //                 message: ''
+    //             });
+    //         })
+    //         .catch((error) => {
+    //             console.error('Error sending email:', error.text);
+    //             alert('Something went wrong. Please try again later.');
+    //         });
+    // };
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        emailjs.send(
-            'service_wjrb0qk',
-            'template_4jdr7t9',
-            {
+        try {
+            // Build the payload to send to sendMail.php
+            const emailPayload = new URLSearchParams({
+                formType: "Contact Us Form",
                 name: formData.name,
                 companyName: formData.companyName,
                 companyWebsite: formData.companyWebsite,
@@ -43,27 +79,42 @@ const Contact = () => {
                 email: formData.email,
                 message: formData.message,
                 time: new Date().toLocaleString()
-            },
-            'vkVckeGL1JQx-x4_q'
-        )
-            .then((result) => {
-                console.log('Email sent successfully!', result.text);
-                alert('Thank you for your message! We will get back to you shortly.');
-                setFormData({
-                    name: '',
-                    companyName: '',
-                    companyWebsite: '',
-                    niche: '',
-                    phone: '',
-                    email: '',
-                    message: ''
-                });
-            })
-            .catch((error) => {
-                console.error('Error sending email:', error.text);
-                alert('Something went wrong. Please try again later.');
             });
+
+            // Send the POST request to Hostinger PHP
+            const response = await fetch("https://twoseas.org/sendMail.php", {
+                method: "POST",
+                body: emailPayload,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                console.log("Email sent successfully!");
+                alert("Thank you for your message! We will get back to you shortly.");
+                // Reset form
+                setFormData({
+                    name: "",
+                    companyName: "",
+                    companyWebsite: "",
+                    niche: "",
+                    phone: "",
+                    email: "",
+                    message: ""
+                });
+            } else {
+                console.warn("Email failed:", result.message);
+                alert("Something went wrong. Please try again later.");
+            }
+        } catch (error) {
+            console.error("Error sending email:", error);
+            alert("Something went wrong. Please try again later.");
+        }
     };
+
 
     const handleScheduleSubmit = async (appointmentData) => {
         try {

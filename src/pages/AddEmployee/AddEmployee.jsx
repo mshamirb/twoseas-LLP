@@ -4,6 +4,7 @@ import './AddEmployee.css';
 import { currencies, navItems } from '../AdminDashboard/constants';
 import { db, collection, addDoc, getDocs } from '../../firebase';
 import defaultProfileImage from "../../assets/no image found.png";
+import ImageCropperModal from '../../components/ImageCropperModel/ImageCropperModel';
 
 const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
     const navigate = useNavigate();
@@ -12,6 +13,7 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
         email: '',
         experience: '',
         expertise: '',
+        hiringDate: '',
         intro: '',
         image: null,
         interviewVideoLink: '',
@@ -32,16 +34,20 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
     const [showVisibilityModal, setShowVisibilityModal] = useState(false);
     const [selectedVisibility, setSelectedVisibility] = useState('admin'); // 'client', 'admin', 'both'
 
+    const [showCropper, setShowCropper] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+
     const filteredClients = clients.filter((client) =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // T-Key color options
     const tKeyColors = [
-        { id: '#ef4444', name: 'Red' },
-        { id: '#22c55e', name: 'Green' },
-        { id: '#3b82f6', name: 'Blue' },
-        { id: '#06a3c2', name: 'Turquoise' }
+        { id: '#000000', name: 'Black' },
+        { id: '#19e965ff', name: 'Green' },      // your previous green
+        { id: '#ec0b0bff', name: 'Red' },
+        { id: '#a0481fff', name: 'Brown' },
+        { id: '#1f41afff', name: 'Dark Blue' },
     ];
 
     // ✅ fetch clients list
@@ -84,11 +90,26 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
         setEmployee({ ...employee, [name]: value });
     };
 
+    // const handleImageUpload = (e) => {
+    //     const file = e.target.files[0];
+    //     if (!file) return;
+
+    //     // Validate image size (max 500KB)
+    //     if (file.size > 500000) {
+    //         alert('Image must be smaller than 500KB');
+    //         return;
+    //     }
+
+    //     const reader = new FileReader();
+    //     reader.onload = (event) => {
+    //         setEmployee({ ...employee, image: event.target.result });
+    //     };
+    //     reader.readAsDataURL(file);
+    // };
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Validate image size (max 500KB)
         if (file.size > 500000) {
             alert('Image must be smaller than 500KB');
             return;
@@ -96,7 +117,8 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            setEmployee({ ...employee, image: event.target.result });
+            setSelectedImage(event.target.result);
+            setShowCropper(true); // open popup to crop
         };
         reader.readAsDataURL(file);
     };
@@ -246,14 +268,15 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
                 },
                 hiddenFromClients: employee.hiddenFromClients || [],
                 tKeyColor: employee.tKeyColor, // Include T-Key color
-                visibleTo: selectedVisibility
+                visibleTo: selectedVisibility,
+                hiringDate: employee.hiringDate
             };
 
             // Add to Firestore
             await addDoc(collection(db, "employees"), employeeData);
 
             alert('Employee added successfully!');
-            navigate('/employee-diary');
+            navigate('/admin-dashboard');
         } catch (error) {
             console.error('Error adding employee: ', error);
             setSubmitError(error.message || 'Failed to add employee. Please try again.');
@@ -418,6 +441,21 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
                                                 required
                                             />
                                         </div>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label>Hiring Date <span className="required">*</span></label>
+                                    <div className="input-with-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M19 4H18V2H16V4H8V2H6V4H5C3.9 4 3 4.9 3 6V20C3 21.1 3.9 22 5 22H19C20.1 22 21 21.1 21 20V6C21 4.9 20.1 4 19 4ZM19 20H5V9H19V20ZM19 7H5V6H19V7Z" fill="#64748B" />
+                                        </svg>
+                                        <input
+                                            type="date"
+                                            name="hiringDate"
+                                            value={employee.hiringDate || ""}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -739,6 +777,17 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
                     </div>
                 </form>
 
+                {showCropper && selectedImage && (
+                    <ImageCropperModal
+                        imageSrc={selectedImage}
+                        onCancel={() => setShowCropper(false)}
+                        onSave={(croppedImage) => {
+                            setEmployee({ ...employee, image: croppedImage });
+                            setShowCropper(false);
+                        }}
+                    />
+                )}
+
                 {/* ✅ Visibility Selection Modal */}
                 {showVisibilityModal && (
                     <div className="modal-overlay">
@@ -762,8 +811,8 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
                                     <label className="visibility-option">
                                         <input
                                             type="radio"
-                                            value="client"
-                                            checked={selectedVisibility === 'client'}
+                                            value="admin_client"
+                                            checked={selectedVisibility === 'admin_client'}
                                             onChange={(e) => setSelectedVisibility(e.target.value)}
                                         />
                                         <div className="option-card">
@@ -773,8 +822,8 @@ const AddEmployee = ({ noPadding, setActiveMenuItem }) => {
                                                 </svg>
                                             </div>
                                             <div className="option-content">
-                                                <h4>Client Only</h4>
-                                                <p>Visible to clients only (hidden from admin)</p>
+                                                <h4>Admin & Client</h4>
+                                                <p>Visible to both admin and clients</p>
                                             </div>
                                         </div>
                                     </label>

@@ -21,7 +21,8 @@
   position: relative;
 }
 
-.business-title, .professionals-title {
+.business-title,
+.professionals-title {
   font-size: 2.25rem;
   font-weight: 700;
   margin-top: 0;
@@ -65,8 +66,8 @@
 }
 
 .second-row {
-  grid-template-columns: repeat(2, 1fr);
-  max-width: 800px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
   margin: 0 auto;
 }
 
@@ -91,6 +92,26 @@
   box-shadow: 0 15px 30px rgba(0, 153, 185, 0.15);
   border-color: rgba(0, 153, 185, 0.3);
 }
+
+.special-card::before {
+  content: "ON REQUEST";
+  position: absolute;
+  top: 35px;
+  left: -35px;
+  background: #a8e6cf;
+  /* light green */
+  color: #065f46;
+  /* dark green text */
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 4px 55px;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 3;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+
 
 .card-icon {
   font-size: 3.5rem;
@@ -173,7 +194,7 @@
   .services-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .second-row {
     grid-template-columns: 1fr;
     max-width: 500px;
@@ -184,11 +205,12 @@
   .services-section {
     padding: 4rem 0;
   }
-  
-  .business-title, .professionals-title {
+
+  .business-title,
+  .professionals-title {
     font-size: 1.8rem;
   }
-  
+
   .service-card {
     height: 280px;
     padding: 1.5rem;
@@ -199,15 +221,15 @@
   .services-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .title-divider {
     margin: 0.25rem 0;
   }
-  
+
   .divider-line {
     width: 40px;
   }
-  
+
   .divider-slash {
     margin: 0 0.5rem;
   }

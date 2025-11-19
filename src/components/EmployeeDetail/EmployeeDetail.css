@@ -47,6 +47,10 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+.avatarcontainer {
+  position: relative;
+}
+
 .profile-info {
   margin-left: 2rem;
   margin-right: 2rem;
@@ -63,6 +67,10 @@
   margin-bottom: 1rem;
   opacity: 0.9;
 }
+.meta-infos{
+  display: flex;
+  gap: 4px;
+}
 
 .meta-info {
   display: flex;
@@ -74,6 +82,40 @@
   padding: 0.5rem 1rem;
   border-radius: 50px;
   font-size: 0.9rem;
+}
+
+/* Wishlist Icon */
+.wishlist-icon {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  background: #fff;
+  border-radius: 50%;
+  padding: 4px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  width: 20px;
+  height: 22px;
+}
+
+.wishlist-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.wishlist-heart {
+  font-size: 10px;
+  color: #2a2d7c;
+}
+
+.wishlist-heart.filled {
+  color: #2a2d7c;
 }
 
 /* .content-section {
@@ -125,7 +167,8 @@
 /* Video wrapper styles for intro-section */
 .intro-section .video-wrapper {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 56.25%;
+  /* 16:9 aspect ratio */
   height: 0;
   overflow: hidden;
   margin-top: 0.5rem;
@@ -488,16 +531,73 @@
   padding: 0;
 }
 
+.confirmation-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.confirmation-modal {
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: popIn 0.3s ease;
+}
+
+.confirmation-modal h3 {
+  color: #2a2d7c;
+  margin-bottom: 0.5rem;
+}
+
+.confirmation-modal p {
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.primary-btn {
+  background: #2a2d7c;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #4043a8;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .scheduler-modal-overlay {
     padding: 10px;
   }
-  
+
   .scheduler-modal {
     max-height: 95vh;
   }
-  
+
   .scheduler-modal .calendar-scheduler {
     padding: 15px;
   }

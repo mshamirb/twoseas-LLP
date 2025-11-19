@@ -1,0 +1,42 @@
+.service-tasks-section {
+  margin-top: 50px;
+}
+
+.tasks-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #00303f;
+}
+
+.tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.task-card {
+  background: #ffff;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.task-icon {
+  font-size: 2rem;
+  color: #007a96;
+  margin-bottom: 0.8rem;
+}
+
+.task-card h4 {
+  color: #313030;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.task-card p {
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}

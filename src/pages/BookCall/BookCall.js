@@ -40,11 +40,51 @@ const BookCall = () => {
     setFormData({ ...formData, phone: value });
   };
 
-  const handleSubmit = (e) => {
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   console.log("Form Submitted:", formData);
+  //   // Add your form submission logic here
+  // };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    // Add your form submission logic here
+
+    try {
+      const formPayload = new FormData();
+      formPayload.append("formType", "Book a Call Form");
+      Object.entries(formData).forEach(([key, value]) => {
+        formPayload.append(key, value);
+      });
+
+      const response = await fetch("https://twoseas.org/sendMail.php", {
+        method: "POST",
+        body: formPayload
+      });
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        alert("✅ Email sent successfully!");
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          niche: "",
+          companyName: "",
+          companyWebsite: "",
+          hearAbout: "",
+          hearAboutOther: ""
+        });
+      } else {
+        alert("❌ Failed to send: " + result.message);
+      }
+
+    } catch (error) {
+      console.error("Error:", error);
+      alert("⚠️ Something went wrong. Check console.");
+    }
   };
+
 
   const handleClose = () => {
     navigate("/");
